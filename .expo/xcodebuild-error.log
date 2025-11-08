@@ -1,0 +1,7 @@
+** BUILD FAILED **
+
+
+The following build commands failed:
+	PhaseScriptExecution [CP]\ Copy\ Pods\ Resources /Users/morgado/Library/Developer/Xcode/DerivedData/mobile-aankvlvsxtjpaqhfagtlpdxvvwem/Build/Intermediates.noindex/mobile.build/Debug-iphonesimulator/mobile.build/Script-800E24972A6A228C8D4807E9.sh (in target 'mobile' from project 'mobile')
+	Building workspace mobile with scheme mobile and configuration Debug
+(2 failures)

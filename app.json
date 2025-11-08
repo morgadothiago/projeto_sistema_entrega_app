@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "mobile",
+    "slug": "mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./app/assets/icon.png",
+    "splash": {
+      "image": "./app/assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0043CB"
+    },
+    "backgroundColor": "#0043CB",
+    "scheme": "mobile",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.thiago-morgado.mobile",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.thiagomorgado.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./app/assets/android-icon-foreground.png",
+        "backgroundImage": "./app/assets/android-icon-foreground.png",
+        "monochromeImage": "./app/assets/android-icon-foreground.png",
+        "backgroundColor": "#0043CB"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./app/assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./app/assets/icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#0043CB",
+          "dark": {
+            "backgroundColor": "#0043CB"
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "93a9a5d3-bc84-44c4-afa6-c6edb3d5eafa"
+      }
+    }
+  }
+}
