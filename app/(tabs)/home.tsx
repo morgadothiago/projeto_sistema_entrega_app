@@ -1,15 +1,87 @@
-import React from "react"
+import { useRouter } from "expo-router"
+import React, { useEffect, useState } from "react"
 import { StyleSheet, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { colors } from "../theme"
 import { Header } from "../components/Header"
 import UserWarpper from "../components/UserWarpper"
 import { useAuth } from "../context/AuthContext"
+import { api } from "../service/api"
+import { colors } from "../theme"
+
+type DeliveryMan = {
+  name: string
+  email: string
+  cpf: string
+  phone: string
+  documents: DeliverDocuments
+  bankAccount: deliveryBankAccount
+}
+
+type DeliverDocuments = {
+  rg: string
+  cpf: string
+  cnh: string
+}
+
+type deliveryBankAccount = {
+  bankName: string
+  accountNumber: string
+  agency: string
+  pixCode: string
+  accountType: string
+  holderName: string
+}
 
 export default function Home() {
-  const { user } = useAuth()
-
+  const { user, token } = useAuth()
+  const [deliveryManData, setDeliveryManData] = useState<DeliveryMan | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const { DeliveryMan } = user || {}
+  const router = useRouter()
+
+  useEffect(() => {
+    const checkTokenExpiration = async () => {
+      if (token === null) {
+        router.replace("/(auth)/Signin")
+      }
+    }
+    checkTokenExpiration()
+  }, [token])
+
+  useEffect(() => {
+    async function LoadAndCheckInfo() {
+      setIsLoading(true)
+      try {
+        const response = await api.get(`/users/${user?.id}`)
+        const data = response.data;
+        setDeliveryManData(data)
+
+        if (!data?.bankAccount || !data?.documents) {
+          router.replace("/(auth)/Documents")
+          return
+        }
+      } catch (error) {
+        console.log(error)
+        router.replace("/(auth)/Signin")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (user?.id) {
+      LoadAndCheckInfo()
+    } else {
+      setIsLoading(false);
+    }
+  }, [user?.id, router, token])
+
+  if (isLoading || !deliveryManData) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={{ color: colors.text, textAlign: 'center', marginTop: 50 }}>Carregando...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
