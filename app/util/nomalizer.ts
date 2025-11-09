@@ -150,10 +150,10 @@ export function normalizeData(userInfo: any, accessData: any) {
     number: userInfo.number,
     complement: userInfo.complement,
     vehicleType: vehicleType,
-    licensePlate: userInfo.licensePlate || "",
-    brand: userInfo.brand || "",
-    model: userInfo.model || "",
-    year: userInfo.year?.toString() || "",
-    color: userInfo.color || "",
+    licensePlate: isBike ? undefined : userInfo.licensePlate || "",
+    brand: isBike ? undefined : userInfo.brand || "",
+    model: isBike ? undefined : userInfo.model || "",
+    year: isBike ? undefined : userInfo.year?.toString() || "",
+    color: isBike ? undefined : userInfo.color || "",
   }
 }

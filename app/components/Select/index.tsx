@@ -1,6 +1,6 @@
-import React from "react"
 import { colors } from "@/app/theme"
 import { Feather } from "@expo/vector-icons"
+import React from "react"
 
 import {
   FlatList,
@@ -80,7 +80,7 @@ export default function AppPicker({
                     setVisible(false)
                   }}
                 >
-                  <Text style={styles.optionText}>{item.label}</Text>
+                  <Text style={[styles.optionText]}>{item.label}</Text>
                 </TouchableOpacity>
               )}
               ListEmptyComponent={
@@ -103,7 +103,7 @@ export default function AppPicker({
 
 const styles = StyleSheet.create({
   container: { marginVertical: 8 },
-  label: { marginBottom: 6, color: colors.text, fontWeight: "900" },
+  label: { marginBottom: 6, color: colors.secondary, fontWeight: "900" },
   selector: {
     backgroundColor: colors.primary,
     paddingHorizontal: 12,

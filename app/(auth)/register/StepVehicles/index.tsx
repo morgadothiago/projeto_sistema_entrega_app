@@ -7,6 +7,7 @@ import AppPicker from "@/app/components/Select"
 import { useMultiStep } from "@/app/context/MultiStepContext"
 import { api } from "@/app/service/api"
 import { RegisterFormData } from "@/app/types/UserData"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import { ImageBackground } from "expo-image"
 import { router } from "expo-router"
 import React, { useEffect, useState } from "react"
@@ -29,9 +30,10 @@ type VehicleTypeOption = {
 
 export default function VehiclesInfo() {
   const { userInfo, setUserInfo } = useMultiStep()
-  const { control, handleSubmit, watch } = useForm<RegisterFormData>({
-    defaultValues: userInfo,
-  })
+  const { control, handleSubmit, watch, setValue, clearErrors, trigger } =
+    useForm<RegisterFormData>({
+      defaultValues: userInfo,
+    })
 
   const [page] = useState(1)
   const [limit] = useState(100)
@@ -47,7 +49,7 @@ export default function VehiclesInfo() {
   const color = watch("color")
 
   // 🔹 Verifica se é bike
-  const isBike = selectedVehicleTypeObj?.value === "Bike"
+  const isBike = selectedVehicleTypeObj === "Bike"
 
   // 🔹 Define se deve mostrar os inputs
   const showVehicleInputs = selectedVehicleTypeObj && !isBike
@@ -61,7 +63,10 @@ export default function VehiclesInfo() {
     try {
       setLoading(true)
       const response = await api.get("/vehicle-types", {
-        params: { page, limit },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${await AsyncStorage.getItem("@token")}`,
+        },
       })
       const data = Array.isArray(response.data?.data) ? response.data.data : []
 
@@ -83,10 +88,32 @@ export default function VehiclesInfo() {
     loadVehicleData()
   }, [])
 
+  useEffect(() => {
+    if (isBike) {
+      setValue("licensePlate", "")
+      setValue("brand", "")
+      setValue("model", "")
+      setValue("year", "")
+      setValue("color", "")
+      clearErrors(["licensePlate", "brand", "model", "year", "color"])
+      trigger()
+    }
+  }, [isBike, setValue, clearErrors, trigger])
+
   function handleNextStep(data: RegisterFormData) {
     setLoading(true)
-    setUserInfo(data)
-    console.log("Dados coletados até o StepVehicles:", data)
+    let dataToSave = { ...data }
+
+    if (isBike) {
+      delete dataToSave.licensePlate
+      delete dataToSave.brand
+      delete dataToSave.model
+      delete dataToSave.year
+      delete dataToSave.color
+    }
+
+    setUserInfo(dataToSave)
+    console.log("Dados coletados até o StepVehicles:", dataToSave)
     router.push("/(auth)/register/StepAcess")
   }
 
@@ -120,11 +147,9 @@ export default function VehiclesInfo() {
                   rules={{ required: "Selecione um tipo de veículo" }}
                   render={({ field: { onChange, value } }) => (
                     <AppPicker
-                      label="Selecione o tipo de veículo"
-                      selectedValue={value?.value}
-                      onValueChange={(itemValue: string) =>
-                        onChange({ label: itemValue, value: itemValue })
-                      }
+                      label="Tipo de Veículo"
+                      onValueChange={onChange}
+                      selectedValue={value}
                       options={vehicleTypes}
                     />
                   )}
@@ -137,7 +162,7 @@ export default function VehiclesInfo() {
                   <Controller
                     control={control}
                     name="licensePlate"
-                    rules={{ required: "A placa é obrigatória" }}
+                    rules={{ required: !isBike && "A placa é obrigatória" }}
                     render={({ field: { onChange, onBlur, value } }) => (
                       <Input
                         icon="credit-card"
@@ -153,7 +178,7 @@ export default function VehiclesInfo() {
                   <Controller
                     control={control}
                     name="brand"
-                    rules={{ required: "A marca é obrigatória" }}
+                    rules={{ required: !isBike && "A marca é obrigatória" }}
                     render={({ field: { onChange, onBlur, value } }) => (
                       <Input
                         icon="tag"
@@ -168,7 +193,7 @@ export default function VehiclesInfo() {
                   <Controller
                     control={control}
                     name="model"
-                    rules={{ required: "O modelo é obrigatório" }}
+                    rules={{ required: !isBike && "O modelo é obrigatório" }}
                     render={({ field: { onChange, onBlur, value } }) => (
                       <Input
                         icon="truck"
@@ -185,7 +210,7 @@ export default function VehiclesInfo() {
                       <Controller
                         control={control}
                         name="year"
-                        rules={{ required: "O ano é obrigatório" }}
+                        rules={{ required: !isBike && "O ano é obrigatório" }}
                         render={({ field: { onChange, onBlur, value } }) => (
                           <Input
                             icon="calendar"
@@ -203,7 +228,7 @@ export default function VehiclesInfo() {
                       <Controller
                         control={control}
                         name="color"
-                        rules={{ required: "A cor é obrigatória" }}
+                        rules={{ required: !isBike && "A cor é obrigatória" }}
                         render={({ field: { onChange, onBlur, value } }) => (
                           <Input
                             icon="droplet"
