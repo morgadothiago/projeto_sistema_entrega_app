@@ -29,6 +29,12 @@ function validateZipCode(zipCode: string): boolean {
 export function normalizeData(userInfo: any, accessData: any) {
   // Validar campos obrigatórios
   const missingFields = []
+  const vehicleType =
+    typeof userInfo.vehicleType === "object" && userInfo.vehicleType?.value
+      ? userInfo.vehicleType.value
+      : typeof userInfo.vehicleType === "string"
+      ? userInfo.vehicleType
+      : ""
 
   if (!validateField(userInfo.name)) missingFields.push("Nome")
   if (!validateField(userInfo.dob)) missingFields.push("Data de nascimento")
@@ -45,14 +51,21 @@ export function normalizeData(userInfo: any, accessData: any) {
   if (!validateField(accessData.password)) missingFields.push("Senha")
 
   // Validar campos do veículo
-  if (!validateField(userInfo.vehicleType))
-    missingFields.push("Tipo de veículo")
-  if (!validateField(userInfo.licensePlate))
-    missingFields.push("Placa do veículo")
-  if (!validateField(userInfo.brand)) missingFields.push("Marca do veículo")
-  if (!validateField(userInfo.model)) missingFields.push("Modelo do veículo")
-  if (!validateField(userInfo.year)) missingFields.push("Ano do veículo")
-  if (!validateField(userInfo.color)) missingFields.push("Cor do veículo")
+  if (!validateField(vehicleType)) missingFields.push("Tipo de veículo")
+
+  const vehicleTypeValue = vehicleType.trim().toLowerCase()
+  const isBike =
+    vehicleTypeValue.includes("bike") ||
+    vehicleTypeValue.includes("bicicleta")
+
+  if (!isBike) {
+    if (!validateField(userInfo.licensePlate))
+      missingFields.push("Placa do veículo")
+    if (!validateField(userInfo.brand)) missingFields.push("Marca do veículo")
+    if (!validateField(userInfo.model)) missingFields.push("Modelo do veículo")
+    if (!validateField(userInfo.year)) missingFields.push("Ano do veículo")
+    if (!validateField(userInfo.color)) missingFields.push("Cor do veículo")
+  }
 
   // Se houver campos faltando, lançar erro
   if (missingFields.length > 0) {
@@ -122,14 +135,6 @@ export function normalizeData(userInfo: any, accessData: any) {
   const formattedPhone = userInfo.phone
     ? userInfo.phone.replace(/[^\d]/g, "")
     : ""
-
-  // Formatar vehicleType (garantir que seja uma string)
-  const vehicleType =
-    typeof userInfo.vehicleType === "object" && userInfo.vehicleType?.value
-      ? userInfo.vehicleType.value
-      : typeof userInfo.vehicleType === "string"
-      ? userInfo.vehicleType
-      : ""
 
   return {
     name: userInfo.name,
