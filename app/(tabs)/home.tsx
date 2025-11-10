@@ -34,7 +34,9 @@ type deliveryBankAccount = {
 
 export default function Home() {
   const { user, token } = useAuth()
-  const [deliveryManData, setDeliveryManData] = useState<DeliveryMan | null>(null)
+  const [deliveryManData, setDeliveryManData] = useState<DeliveryMan | null>(
+    null
+  )
   const [isLoading, setIsLoading] = useState(true)
   const { DeliveryMan } = user || {}
   const router = useRouter()
@@ -53,11 +55,11 @@ export default function Home() {
       setIsLoading(true)
       try {
         const response = await api.get(`/users/${user?.id}`)
-        const data = response.data;
+        const data = response.data
         setDeliveryManData(data)
 
         if (!data?.bankAccount || !data?.documents) {
-          router.replace("/(auth)/Documents")
+          router.replace("/(auth)/LoadingDocuments")
           return
         }
       } catch (error) {
@@ -71,16 +73,20 @@ export default function Home() {
     if (user?.id) {
       LoadAndCheckInfo()
     } else {
-      setIsLoading(false);
+      setIsLoading(false)
     }
   }, [user?.id, router, token])
 
   if (isLoading || !deliveryManData) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={{ color: colors.text, textAlign: 'center', marginTop: 50 }}>Carregando...</Text>
+        <Text
+          style={{ color: colors.text, textAlign: "center", marginTop: 50 }}
+        >
+          Carregando...
+        </Text>
       </SafeAreaView>
-    );
+    )
   }
 
   return (

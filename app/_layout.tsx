@@ -3,20 +3,35 @@ import { Stack } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import React from "react"
 import Toast from "react-native-toast-message"
-import { AuthProvider } from "./context/AuthContext"
+import { AuthProvider, useAuth } from "./context/AuthContext"
 import { SafeAreaProvider } from "react-native-safe-area-context"
+import Loading from "./components/Loading"
+
+function InitialLayout() {
+  const { loading } = useAuth()
+
+  if (loading) {
+    return <Loading />
+  }
+
+  return (
+    <>
+      <StatusBar style="light" />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+        }}
+      />
+      <Toast config={toastConfig} />
+    </>
+  )
+}
 
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <StatusBar style="light" />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-          }}
-        />
-        <Toast config={toastConfig} />
+        <InitialLayout />
       </AuthProvider>
     </SafeAreaProvider>
   )

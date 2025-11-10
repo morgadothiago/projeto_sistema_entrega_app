@@ -11,93 +11,108 @@ import {
   TouchableOpacity,
   View,
 } from "react-native"
+import { Control, Controller, FieldValues, RegisterOptions } from "react-hook-form"
 
 type Option = { label: string; value: string }
-type Props = {
+type Props<T extends FieldValues> = {
   label?: string
   selectedValue?: string
-  onValueChange: (value: string) => void
+  onValueChange?: (value: string) => void
   options: Option[]
   placeholder?: string
+  control: Control<T>
+  name: keyof T
+  rules?: RegisterOptions
 }
 
-export default function AppPicker({
+export default function Select<T extends FieldValues>({
   label,
   selectedValue,
   onValueChange,
   options,
   placeholder = "Selecione",
-}: Props) {
-  // Converter apenas o label para minúsculo, mantendo o value original
+  control,
+  name,
+  rules,
+}: Props<T>) {
   const processedOptions = options.map((option) => ({
-    label: option.label.toLowerCase(),
-    value: option.value, // Mantém o valor original para compatibilidade com o backend
+    label: option.label,
+    value: option.value,
   }))
 
   const [visible, setVisible] = React.useState(false)
-  const selectedLabel = processedOptions.find(
-    (o) => o.value === selectedValue
-  )?.label
 
   return (
-    <View style={styles.container}>
-      {label ? <Text style={styles.label}>{label}</Text> : null}
+    <Controller
+      control={control}
+      name={name}
+      rules={rules}
+      render={({ field: { onChange, value }, fieldState: { error } }) => (
+        <View style={styles.container}>
+          {label ? <Text style={styles.label}>{label}</Text> : null}
 
-      <Pressable style={styles.selector} onPress={() => setVisible(true)}>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Text style={styles.selectorText}>
-            {selectedLabel ?? placeholder}
-          </Text>
-          <Feather name="arrow-down-circle" size={30} color={colors.buttons} />
-        </View>
-      </Pressable>
+          <Pressable style={styles.selector} onPress={() => setVisible(true)}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Text style={styles.selectorText}>
+                {processedOptions.find((o) => o.value === value)?.label ?? placeholder}
+              </Text>
+              <Feather name="arrow-down-circle" size={30} color={colors.buttons} />
+            </View>
+          </Pressable>
 
-      <Modal
-        visible={visible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setVisible(false)}
-      >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setVisible(false)}
-        >
-          <View style={styles.modal}>
-            <FlatList
-              data={processedOptions}
-              keyExtractor={(item) => item.value}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.option}
-                  onPress={() => {
-                    onValueChange(item.value)
-                    setVisible(false)
-                  }}
-                >
-                  <Text style={[styles.optionText]}>{item.label}</Text>
-                </TouchableOpacity>
-              )}
-              ListEmptyComponent={
-                <Text style={{ padding: 12 }}>Sem opções</Text>
-              }
-            />
+          {error && <Text style={styles.errorText}>{error.message}</Text>}
 
-            <TouchableOpacity
-              style={styles.cancel}
+          <Modal
+            visible={visible}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setVisible(false)}
+          >
+            <Pressable
+              style={styles.modalOverlay}
               onPress={() => setVisible(false)}
             >
-              <Text style={styles.cancelText}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </Pressable>
-      </Modal>
-    </View>
+              <View style={styles.modal}>
+                <FlatList
+                  data={processedOptions}
+                  keyExtractor={(item) => item.value}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={styles.option}
+                      onPress={() => {
+                        onChange(item.value)
+                        if (onValueChange) {
+                          onValueChange(item.value)
+                        }
+                        setVisible(false)
+                      }}
+                    >
+                      <Text style={[styles.optionText]}>{item.label}</Text>
+                    </TouchableOpacity>
+                  )}
+                  ListEmptyComponent={
+                    <Text style={{ padding: 12 }}>Sem opções</Text>
+                  }
+                />
+
+                <TouchableOpacity
+                  style={styles.cancel}
+                  onPress={() => setVisible(false)}
+                >
+                  <Text style={styles.cancelText}>Cancelar</Text>
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </Modal>
+        </View>
+      )}
+    />
   )
 }
 
@@ -126,4 +141,5 @@ const styles = StyleSheet.create({
   optionText: { fontSize: 16, color: colors.buttons, fontWeight: "600" },
   cancel: { padding: 16, alignItems: "center" },
   cancelText: { color: "red", fontWeight: "600" },
+  errorText: { color: "red", fontSize: 12, marginTop: 4 },
 })
