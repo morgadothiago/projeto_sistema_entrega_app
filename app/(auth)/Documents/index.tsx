@@ -39,9 +39,10 @@ export default function Documents() {
     resolver: yupResolver(UserInfoSchema) as any,
 
     defaultValues: {
-      documentType: "",
+      documentType: undefined,
       documentImageUri: "",
       documentNumber: "",
+
       fullName: "",
       cpf: "",
       orgaoEmissao: "",
@@ -97,17 +98,17 @@ export default function Documents() {
     console.log(data)
     setSubmittedData(data) // Guarda os dados no estado
 
-    // Aqui você pode adicionar a lógica para salvar os dados do documento
-
-    setValue("documentType", "")
-    setValue("documentImageUri", "")
-    setValue("documentNumber", "")
-
-    setValue("fullName", "")
-    setValue("cpf", "")
-    setValue("orgaoEmissao", "")
-    setValue("cnhType", undefined)
-    Alert.alert("Documento enviado com sucesso!")
+    const data = new FormData()
+    data.append("type", "RG") // ou CNH_frente etc.
+    data.append("description", "Orgão emissor: SP; número: 368694963")
+    data.append("file", {
+      uri: documentImageUri,
+      name: "rg.jpeg",
+      type: "image/jpeg",
+    })
+    await api.post("/deliveryman/documents", data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
 
     router.replace("/(auth)/Payments")
   }
@@ -190,7 +191,7 @@ export default function Documents() {
               />
               <Input
                 control={control}
-                name="fullName"
+                name="rg"
                 placeholder="Nome completo"
                 placeholderTextColor={colors.buttons}
                 keyboardType="name-phone-pad"

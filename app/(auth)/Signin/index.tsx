@@ -121,7 +121,7 @@ export default function LoginScreen() {
                   control={control}
                   name="email"
                   rules={{ required: "E-mail é obrigatório" }}
-                  render={({ field: { onChange, onBlur, value } }) => (
+                  render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                     <Input
                       icon="mail"
                       placeholder="E-mail"
@@ -132,19 +132,16 @@ export default function LoginScreen() {
                       onChangeText={onChange}
                       onBlur={onBlur}
                       containerStyle={styles.input}
+                      error={error?.message}
                     />
                   )}
                 />
-                {errors.email && (
-                  <Text style={styles.error}>{errors.email.message}</Text>
-                )}
-
                 {/* Senha */}
                 <Controller
                   control={control}
                   name="password"
                   rules={{ required: "Senha é obrigatória" }}
-                  render={({ field: { onChange, onBlur, value } }) => (
+                  render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                     <Input
                       icon="lock"
                       placeholder="Senha"
@@ -154,6 +151,7 @@ export default function LoginScreen() {
                       onChangeText={onChange}
                       onBlur={onBlur}
                       containerStyle={styles.input}
+                      error={error?.message}
                     />
                   )}
                 />
