@@ -6,7 +6,6 @@ export type DocumentFormData = {
   documentType: DocumentType
   documentImageUri: string
   documentNumber: string
-  rg?: string
   fullName?: string
   cpf?: string
   orgaoEmissao?: string
@@ -25,7 +24,7 @@ export const schema = yup.object().shape({
 export const UserInfoSchema = yup.object().shape({
   documentType: yup
     .string()
-    .oneOf(["RG", "CNH"], "Selecione um tipo de documento válido")
+    .oneOf(["RG", "CNH", ""], "Selecione um tipo de documento válido")
     .required("Selecione o tipo de documento"),
   documentImageUri: yup.string().required("Adicione uma foto do documento"),
   documentNumber: yup.string().when("documentType", {
@@ -33,13 +32,8 @@ export const UserInfoSchema = yup.object().shape({
     then: (schema) => schema.required("Informe o número do documento"),
     otherwise: (schema) => schema.notRequired(),
   }),
-  rg: yup.string().when("documentType", {
-    is: "RG",
-    then: (schema) => schema.required("Informe o nome completo"),
-    otherwise: (schema) => schema.notRequired(),
-  }),
   fullName: yup.string().when("documentType", {
-    is: "CNH",
+    is: (val: DocumentType) => val === "RG" || val === "CNH",
     then: (schema) => schema.required("Informe o nome completo"),
     otherwise: (schema) => schema.notRequired(),
   }),

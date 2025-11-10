@@ -52,10 +52,6 @@ export default function Payments() {
   const onSubmit = (data: PaymentFormData) => {
     console.log(data)
     setSubmittedData(data)
-    Alert.alert("Informações bancárias enviadas com sucesso!")
-    reset()
-    // Aqui você pode adicionar a lógica para salvar os dados bancários
-    // router.replace("/(auth)/NextScreen") // Redirecionar para a próxima tela
   }
 
   const onErrors = () => {
@@ -80,7 +76,7 @@ export default function Payments() {
         <Header
           title="Informações Bancárias"
           tabs={false}
-          onBackPress={() => router.back()}
+          onBackPress={() => router.push("/(auth)/Documents")}
         />
         <View style={styles.content}>
           <View

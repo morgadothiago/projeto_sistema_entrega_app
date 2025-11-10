@@ -39,10 +39,9 @@ export default function Documents() {
     resolver: yupResolver(UserInfoSchema) as any,
 
     defaultValues: {
-      documentType: undefined,
+      documentType: "",
       documentImageUri: "",
       documentNumber: "",
-      rg: "",
       fullName: "",
       cpf: "",
       orgaoEmissao: "",
@@ -100,6 +99,14 @@ export default function Documents() {
 
     // Aqui você pode adicionar a lógica para salvar os dados do documento
 
+    setValue("documentType", "")
+    setValue("documentImageUri", "")
+    setValue("documentNumber", "")
+
+    setValue("fullName", "")
+    setValue("cpf", "")
+    setValue("orgaoEmissao", "")
+    setValue("cnhType", undefined)
     Alert.alert("Documento enviado com sucesso!")
 
     router.replace("/(auth)/Payments")
@@ -183,7 +190,7 @@ export default function Documents() {
               />
               <Input
                 control={control}
-                name="rg"
+                name="fullName"
                 placeholder="Nome completo"
                 placeholderTextColor={colors.buttons}
                 keyboardType="name-phone-pad"
