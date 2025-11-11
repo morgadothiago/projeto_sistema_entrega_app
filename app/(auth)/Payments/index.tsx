@@ -20,6 +20,8 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import * as yup from "yup"
+import LoadingPayment from "./LoadingPayment"
+import LoadingPaymentSuccess from "./LoadingPaymentSuccess"
 
 export default function Payments() {
   const { user, loading } = useAuth()
@@ -27,6 +29,8 @@ export default function Payments() {
   const [submittedData, setSubmittedData] = useState<PaymentFormData | null>(
     null
   )
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
 
   const {
     control,
@@ -47,11 +51,34 @@ export default function Payments() {
     },
   })
 
+  const getTypeKey = (data: PaymentFormData) => {
+    console.log(data)
+  }
+
   const paymentType = watch("paymentType")
 
-  const onSubmit = (data: PaymentFormData) => {
-    console.log(data)
-    setSubmittedData(data)
+  const onSubmit = async (data: PaymentFormData) => {
+    setIsSubmitting(true)
+
+    try {
+      // Simulação de envio para API (substitua pela sua chamada real)
+      console.log("Dados do pagamento:", data)
+
+      // Simula delay de requisição
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+
+      setSubmittedData(data)
+      setIsSubmitting(false)
+
+      // Mostra tela de sucesso
+      setShowSuccess(true)
+    } catch (error) {
+      setIsSubmitting(false)
+      Alert.alert(
+        "Erro",
+        "Não foi possível salvar as informações bancárias. Tente novamente."
+      )
+    }
   }
 
   const onErrors = () => {
@@ -68,6 +95,16 @@ export default function Payments() {
     } else if (errors.accountNumber) {
       Alert.alert("Erro", errors.accountNumber.message)
     }
+  }
+
+  // Mostra loading enquanto submete
+  if (isSubmitting) {
+    return <LoadingPayment />
+  }
+
+  // Mostra tela de sucesso
+  if (showSuccess) {
+    return <LoadingPaymentSuccess />
   }
 
   return (
@@ -107,6 +144,8 @@ export default function Payments() {
                 name="pixKey"
                 placeholder="Chave Pix"
                 placeholderTextColor={colors.buttons}
+                onBlur={() => getTypeKey({ pixKey: watch("pixKey") })}
+                onChangeText={(text) => getTypeKey({ pixKey: text })}
               />
               <Select
                 control={control}

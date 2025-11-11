@@ -1,9 +1,9 @@
 import * as yup from "yup"
 
-type PaymentType = "Pix" | "Transferencia" | ""
+type PaymentType = "Pix" | "Transferencia"
 
 export type PaymentFormData = {
-  paymentType: PaymentType
+  paymentType?: PaymentType
   pixKey?: string
   pixKeyType?: "CPF" | "CNPJ" | "Email" | "Telefone" | "Chave Aleatória"
   bankName?: string

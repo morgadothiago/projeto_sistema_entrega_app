@@ -6,12 +6,23 @@ import Toast from "react-native-toast-message"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { SafeAreaProvider } from "react-native-safe-area-context"
 import Loading from "./components/Loading"
+import LoadingAnimation from "./assets/Loading.json"
+import Logo from "./assets/logo.png"
+import FundoLogo from "./assets/funndo.png"
 
 function InitialLayout() {
   const { loading } = useAuth()
 
   if (loading) {
-    return <Loading />
+    return (
+      <Loading
+        animation={LoadingAnimation}
+        background={FundoLogo}
+        logo={Logo}
+        logoSize={{ width: 100, height: 100 }}
+        animationSize={{ width: 50, height: 50 }}
+      />
+    )
   }
 
   return (

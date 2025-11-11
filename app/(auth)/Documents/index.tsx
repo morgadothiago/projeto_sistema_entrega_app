@@ -25,11 +25,15 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import Toast from "react-native-toast-message"
 import * as yup from "yup"
 
+import LoadingDocument from "./LoadingDocument"
+import LoadingDocumentSuccess from "./LoadingDocumentSuccess"
+
 export default function Documents() {
   const { user, loading } = useAuth()
-  const [submittedData, setSubmittedData] = useState<DocumentFormData | null>(
-    null
-  )
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [submittedData, setSubmittedData] = useState<DocumentFormData | null>(null)
+
   const {
     control,
     handleSubmit,
@@ -97,7 +101,7 @@ export default function Documents() {
 
   const onSubmit = async (data: DocumentFormData) => {
     console.log(data)
-    setSubmittedData(data) // Guarda os dados no estado
+    setIsSubmitting(true)
 
     try {
       const formData = new FormData()
@@ -112,12 +116,17 @@ export default function Documents() {
         headers: { "Content-Type": "multipart/form-data" },
       })
 
+      setSubmittedData(data)
+      setIsSubmitting(false)
+      setShowSuccess(true)
+
       Toast.show({
         type: "success",
         text1: "Sucesso!",
         text2: "Documento enviado com sucesso 👌",
       })
     } catch (error) {
+      setIsSubmitting(false)
       Toast.show({
         type: "error",
         text1: "Erro!",
@@ -130,6 +139,16 @@ export default function Documents() {
     if (errors.documentImageUri) {
       Alert.alert("Erro", errors.documentImageUri.message)
     }
+  }
+
+  // Mostra loading durante upload
+  if (isSubmitting) {
+    return <LoadingDocument />
+  }
+
+  // Mostra tela de sucesso
+  if (showSuccess) {
+    return <LoadingDocumentSuccess />
   }
 
   return (
@@ -287,7 +306,9 @@ export default function Documents() {
               borderRadius: 8,
             }}
           >
-            <Text>Enviar</Text>
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: "bold", textAlign: "center" }}>
+              Enviar
+            </Text>
           </Pressable>
         </View>
       </SafeAreaView>

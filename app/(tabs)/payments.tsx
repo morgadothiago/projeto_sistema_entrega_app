@@ -1,6 +1,5 @@
 import React, { useState } from "react"
 import {
-  ActivityIndicator,
   FlatList,
   Modal,
   Pressable,
@@ -9,23 +8,25 @@ import {
   View,
 } from "react-native"
 
-// import LottieView from "lottie-react-native"
 import { useRouter } from "expo-router"
 import { useAuth } from "../context/AuthContext"
 import { colors } from "../theme"
 
 import { MaterialIcons } from "@expo/vector-icons"
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
-import Toast from "react-native-toast-message"
 import ConfirmationModal from "../components/ConfirmationModal"
 import { Header } from "../components/Header"
 import ListItemPayments from "../components/ListItemPayments"
 import { cashFlowData } from "../mocks/paymentsData"
+import LoadingWithdraw from "./LoadingWithdraw"
+import LoadingWithdrawSuccess from "./LoadingWithdrawSuccess"
 
 export default function Payments() {
   const { user } = useAuth()
   const routes = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [withdrawValue, setWithdrawValue] = useState("")
   const [selectedFilter, setSelectedFilter] = useState<
     "all" | "entrada" | "saida"
   >("all")
@@ -36,7 +37,10 @@ export default function Payments() {
   const [transactions, setTransactions] = useState(cashFlowData)
 
   const handleConfirmPayment = (paymentData: any) => {
-    // Implementação da lógica de confirmação de pagamento
+    // Salva o valor do saque
+    setWithdrawValue(paymentData?.value || "R$ 0,00")
+
+    // Mostra loading de processamento
     setIsLoading(true)
 
     // Simulação de processamento (remover na implementação real)
@@ -46,17 +50,15 @@ export default function Payments() {
       // Limpar a lista de transações após o saque
       setTransactions([])
 
-      // Exibindo o Toast somente após o loading terminar
-      Toast.show({
-        type: "success",
-        text1: "Saque realizado com sucesso",
-        text2: `Valor: ${paymentData?.value || "R$ 0,00"}`,
-        visibilityTime: 4000,
-        autoHide: true,
-        topOffset: 30,
-      })
+      // Mostra tela de sucesso
+      setShowSuccess(true)
+
       // Aqui você pode adicionar a chamada à API ou outra lógica necessária
-    }, 1500)
+    }, 2000)
+  }
+
+  const handleSuccessFinish = () => {
+    setShowSuccess(false)
   }
 
   const filteredCashFlowData = transactions.filter((item) => {
@@ -65,6 +67,21 @@ export default function Payments() {
     }
     return item.tipo === selectedFilter
   })
+
+  // Mostra loading de processamento
+  if (isLoading) {
+    return <LoadingWithdraw />
+  }
+
+  // Mostra tela de sucesso
+  if (showSuccess) {
+    return (
+      <LoadingWithdrawSuccess
+        value={withdrawValue}
+        onFinish={handleSuccessFinish}
+      />
+    )
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -189,16 +206,6 @@ export default function Payments() {
             { bottom: insets.bottom + 90 },
           ]}
         ></View>
-
-        {/* Modal de loading */}
-        <Modal transparent animationType="fade" visible={isLoading}>
-          <View style={styles.overlay}>
-            <View style={styles.loaderBox}>
-              <ActivityIndicator size="large" color={colors.active} />
-              <Text style={styles.overlayText}>Processando...</Text>
-            </View>
-          </View>
-        </Modal>
 
         <Modal
           transparent
@@ -418,17 +425,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(0, 0, 0, 0.6)",
-  },
-  loaderBox: {
-    backgroundColor: "#fff",
-    padding: 24,
-    borderRadius: 16,
-    alignItems: "center",
-  },
-  overlayText: {
-    color: colors.text,
-    marginTop: 12,
-    fontSize: 16,
-    fontWeight: "500",
   },
 })
