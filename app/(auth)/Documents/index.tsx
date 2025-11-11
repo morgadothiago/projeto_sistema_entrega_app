@@ -3,6 +3,7 @@ import Input from "@/app/components/Input"
 import Select from "@/app/components/Select"
 import { useAuth } from "@/app/context/AuthContext"
 import { DocumentFormData, UserInfoSchema } from "@/app/schema/accouts"
+import { api } from "@/app/service/api"
 import { colors } from "@/app/theme"
 import { Feather } from "@expo/vector-icons"
 import { yupResolver } from "@hookform/resolvers/yup"
@@ -21,6 +22,7 @@ import {
   View,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
+import Toast from "react-native-toast-message"
 import * as yup from "yup"
 
 export default function Documents() {
@@ -39,10 +41,9 @@ export default function Documents() {
     resolver: yupResolver(UserInfoSchema) as any,
 
     defaultValues: {
-      documentType: undefined,
+      documentType: "",
       documentImageUri: "",
       documentNumber: "",
-
       fullName: "",
       cpf: "",
       orgaoEmissao: "",
@@ -94,23 +95,35 @@ export default function Documents() {
     ])
   }
 
-  const onSubmit = (data: DocumentFormData) => {
+  const onSubmit = async (data: DocumentFormData) => {
     console.log(data)
     setSubmittedData(data) // Guarda os dados no estado
 
-    const data = new FormData()
-    data.append("type", "RG") // ou CNH_frente etc.
-    data.append("description", "Orgão emissor: SP; número: 368694963")
-    data.append("file", {
-      uri: documentImageUri,
-      name: "rg.jpeg",
-      type: "image/jpeg",
-    })
-    await api.post("/deliveryman/documents", data, {
-      headers: { "Content-Type": "multipart/form-data" },
-    })
+    try {
+      const formData = new FormData()
+      formData.append("type", data.documentType)
+      formData.append("file", {
+        uri: data.documentImageUri,
+        name: "document.jpeg",
+        type: "image/jpeg",
+      } as any)
 
-    router.replace("/(auth)/Payments")
+      await api.post("/deliveryman/documents", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+
+      Toast.show({
+        type: "success",
+        text1: "Sucesso!",
+        text2: "Documento enviado com sucesso 👌",
+      })
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Erro!",
+        text2: "Ocorreu um erro ao enviar o documento 👌",
+      })
+    }
   }
 
   const onErrors = () => {
@@ -191,7 +204,7 @@ export default function Documents() {
               />
               <Input
                 control={control}
-                name="rg"
+                name="fullName"
                 placeholder="Nome completo"
                 placeholderTextColor={colors.buttons}
                 keyboardType="name-phone-pad"

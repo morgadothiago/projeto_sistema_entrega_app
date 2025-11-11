@@ -215,7 +215,7 @@ export default function VehiclesInfo() {
                           <Input
                             icon="calendar"
                             placeholder="Ano"
-                            value={value}
+                            value={value?.toString() || ''}
                             onChangeText={onChange}
                             onBlur={onBlur}
                             keyboardType="numeric"

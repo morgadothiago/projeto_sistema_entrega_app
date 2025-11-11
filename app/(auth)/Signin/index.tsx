@@ -132,7 +132,6 @@ export default function LoginScreen() {
                       onChangeText={onChange}
                       onBlur={onBlur}
                       containerStyle={styles.input}
-                      error={error?.message}
                     />
                   )}
                 />
@@ -151,7 +150,6 @@ export default function LoginScreen() {
                       onChangeText={onChange}
                       onBlur={onBlur}
                       containerStyle={styles.input}
-                      error={error?.message}
                     />
                   )}
                 />

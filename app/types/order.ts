@@ -4,6 +4,14 @@ export interface Company {
   phone: string
 }
 
+export interface ClientAddress {
+  street: string
+  number: string
+  city: string
+  state: string
+  zipCode: string
+}
+
 export interface ApiOrder {
   Company: Company
   code: string
@@ -14,11 +22,12 @@ export interface ApiOrder {
   isFragile: boolean
   length: number
   price: string
-  status: "PENDING" | "IN_TRANSIT" | "DELIVERED"
+  status: "PENDING" | "IN_TRANSIT" | "IN_PROGRESS" | "DELIVERED"
   telefone: string
   vehicleType: string
   weight: number
   width: number
   phone: string
   andress: string
+  ClientAddress?: ClientAddress | ClientAddress[]
 }

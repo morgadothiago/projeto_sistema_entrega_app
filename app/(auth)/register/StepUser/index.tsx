@@ -22,6 +22,7 @@ import { styles } from "./styles"
 
 import Input from "@/app/components/Input"
 import { toastConfig } from "@/toastConfig"
+import { RegisterFormData } from "@/app/types/UserData"
 
 export default function UserInfo() {
   const { userInfo, setUserInfo } = useMultiStep()
@@ -36,9 +37,9 @@ export default function UserInfo() {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm({
+  } = useForm<RegisterFormData>({
     defaultValues: userInfo,
-    resolver: yupResolver(schema),
+    resolver: yupResolver(schema) as any,
   })
   useEffect(() => {
     setLoading(false)
@@ -111,7 +112,7 @@ export default function UserInfo() {
                       <Input
                         icon="calendar"
                         placeholder="Data de Nascimento"
-                        value={value}
+                        value={typeof value === 'string' ? value : value instanceof Date ? value.toISOString() : JSON.stringify(value)}
                         onChangeText={onChange}
                         containerStyle={signinStyles.input}
                       />

@@ -1,15 +1,15 @@
-import { UserInfoData } from "@/app/types/UserData"
+import { RegisterFormData } from "@/app/types/UserData"
 import React, { createContext, useContext, useState } from "react"
 
 interface MultiStepContextProps {
   step: number
   setStep: (step: number) => void
-  userInfo: UserInfoData
-  setUserInfo: (data: UserInfoData) => void
+  userInfo: RegisterFormData
+  setUserInfo: (data: RegisterFormData) => void
   reset: () => void
 }
 
-const defaultUserInfo: UserInfoData = {
+const defaultUserInfo: RegisterFormData = {
   name: "",
   dob: "",
   cpf: "",
@@ -32,7 +32,7 @@ export const MultiStepProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [step, setStep] = useState(0)
-  const [userInfo, setUserInfo] = useState<UserInfoData>(defaultUserInfo)
+  const [userInfo, setUserInfo] = useState<RegisterFormData>(defaultUserInfo)
 
   function reset() {
     setStep(0)

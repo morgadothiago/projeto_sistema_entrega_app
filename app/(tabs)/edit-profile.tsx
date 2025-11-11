@@ -17,6 +17,36 @@ import { useAuth } from "../context/AuthContext"
 import { colors } from "../theme"
 import { formatDateToBR } from "../util/masks"
 
+type FormData = {
+  name: string
+  cpf: string
+  dateOfBirth?: string
+  dob?: string
+  email: string
+  phone: string
+  street: string
+  number: string
+  neighborhood: string
+  complement: string
+  zipCode: string
+  city: string
+  state: string
+  vehicleBrand: string
+  vehicleModel: string
+  licensePlate: string
+  vehicleColor: string
+}
+
+type FieldItem = {
+  label: string
+  name: string
+  icon: string
+  secureTextEntry: boolean
+  keyboardType?: string
+  disabled?: boolean
+  mask?: (value: string) => string
+}
+
 export default function EditProfile() {
   const { user } = useAuth()
   const router = useRouter()
@@ -98,7 +128,7 @@ export default function EditProfile() {
       />
 
       <View style={styles.contentContainer}>
-        <SectionList
+        <SectionList<FieldItem>
           keyExtractor={(item) => item.name}
           showsVerticalScrollIndicator={false}
           sections={[

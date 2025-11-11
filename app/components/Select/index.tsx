@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native"
-import { Control, Controller, FieldValues, RegisterOptions } from "react-hook-form"
+import { Control, Controller, FieldValues, Path, RegisterOptions } from "react-hook-form"
 
 type Option = { label: string; value: string }
 type Props<T extends FieldValues> = {
@@ -20,9 +20,9 @@ type Props<T extends FieldValues> = {
   onValueChange?: (value: string) => void
   options: Option[]
   placeholder?: string
-  control: Control<T>
-  name: keyof T
-  rules?: RegisterOptions
+  control?: Control<T>
+  name?: Path<T>
+  rules?: RegisterOptions<T, Path<T>>
 }
 
 export default function Select<T extends FieldValues>({
@@ -42,77 +42,144 @@ export default function Select<T extends FieldValues>({
 
   const [visible, setVisible] = React.useState(false)
 
-  return (
-    <Controller
-      control={control}
-      name={name}
-      rules={rules}
-      render={({ field: { onChange, value }, fieldState: { error } }) => (
-        <View style={styles.container}>
-          {label ? <Text style={styles.label}>{label}</Text> : null}
+  // Se control e name forem fornecidos, usa Controller
+  if (control && name) {
+    return (
+      <Controller
+        control={control}
+        name={name}
+        rules={rules}
+        render={({ field: { onChange, value }, fieldState: { error } }) => (
+          <View style={styles.container}>
+            {label ? <Text style={styles.label}>{label}</Text> : null}
 
-          <Pressable style={styles.selector} onPress={() => setVisible(true)}>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <Text style={styles.selectorText}>
-                {processedOptions.find((o) => o.value === value)?.label ?? placeholder}
-              </Text>
-              <Feather name="arrow-down-circle" size={30} color={colors.buttons} />
-            </View>
-          </Pressable>
-
-          {error && <Text style={styles.errorText}>{error.message}</Text>}
-
-          <Modal
-            visible={visible}
-            transparent
-            animationType="slide"
-            onRequestClose={() => setVisible(false)}
-          >
-            <Pressable
-              style={styles.modalOverlay}
-              onPress={() => setVisible(false)}
-            >
-              <View style={styles.modal}>
-                <FlatList
-                  data={processedOptions}
-                  keyExtractor={(item) => item.value}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={styles.option}
-                      onPress={() => {
-                        onChange(item.value)
-                        if (onValueChange) {
-                          onValueChange(item.value)
-                        }
-                        setVisible(false)
-                      }}
-                    >
-                      <Text style={[styles.optionText]}>{item.label}</Text>
-                    </TouchableOpacity>
-                  )}
-                  ListEmptyComponent={
-                    <Text style={{ padding: 12 }}>Sem opções</Text>
-                  }
-                />
-
-                <TouchableOpacity
-                  style={styles.cancel}
-                  onPress={() => setVisible(false)}
-                >
-                  <Text style={styles.cancelText}>Cancelar</Text>
-                </TouchableOpacity>
+            <Pressable style={styles.selector} onPress={() => setVisible(true)}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={styles.selectorText}>
+                  {processedOptions.find((o) => o.value === value)?.label ?? placeholder}
+                </Text>
+                <Feather name="arrow-down-circle" size={30} color={colors.buttons} />
               </View>
             </Pressable>
-          </Modal>
+
+            {error && <Text style={styles.errorText}>{error.message}</Text>}
+
+            <Modal
+              visible={visible}
+              transparent
+              animationType="slide"
+              onRequestClose={() => setVisible(false)}
+            >
+              <Pressable
+                style={styles.modalOverlay}
+                onPress={() => setVisible(false)}
+              >
+                <View style={styles.modal}>
+                  <FlatList
+                    data={processedOptions}
+                    keyExtractor={(item) => item.value}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={styles.option}
+                        onPress={() => {
+                          onChange(item.value)
+                          if (onValueChange) {
+                            onValueChange(item.value)
+                          }
+                          setVisible(false)
+                        }}
+                      >
+                        <Text style={[styles.optionText]}>{item.label}</Text>
+                      </TouchableOpacity>
+                    )}
+                    ListEmptyComponent={
+                      <Text style={{ padding: 12 }}>Sem opções</Text>
+                    }
+                  />
+
+                  <TouchableOpacity
+                    style={styles.cancel}
+                    onPress={() => setVisible(false)}
+                  >
+                    <Text style={styles.cancelText}>Cancelar</Text>
+                  </TouchableOpacity>
+                </View>
+              </Pressable>
+            </Modal>
+          </View>
+        )}
+      />
+    )
+  }
+
+  // Caso contrário, usa como select controlado comum
+  return (
+    <View style={styles.container}>
+      {label ? <Text style={styles.label}>{label}</Text> : null}
+
+      <Pressable style={styles.selector} onPress={() => setVisible(true)}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Text style={styles.selectorText}>
+            {processedOptions.find((o) => o.value === selectedValue)?.label ?? placeholder}
+          </Text>
+          <Feather name="arrow-down-circle" size={30} color={colors.buttons} />
         </View>
-      )}
-    />
+      </Pressable>
+
+      <Modal
+        visible={visible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setVisible(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setVisible(false)}
+        >
+          <View style={styles.modal}>
+            <FlatList
+              data={processedOptions}
+              keyExtractor={(item) => item.value}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.option}
+                  onPress={() => {
+                    if (onValueChange) {
+                      onValueChange(item.value)
+                    }
+                    setVisible(false)
+                  }}
+                >
+                  <Text style={[styles.optionText]}>{item.label}</Text>
+                </TouchableOpacity>
+              )}
+              ListEmptyComponent={
+                <Text style={{ padding: 12 }}>Sem opções</Text>
+              }
+            />
+
+            <TouchableOpacity
+              style={styles.cancel}
+              onPress={() => setVisible(false)}
+            >
+              <Text style={styles.cancelText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
+    </View>
   )
 }
 
