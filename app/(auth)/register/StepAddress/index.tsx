@@ -7,12 +7,14 @@ import { yupResolver } from "@hookform/resolvers/yup"
 import { ImageBackground } from "expo-image"
 import { router } from "expo-router"
 import React, { useEffect, useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import {
-  ActivityIndicator,
+  Animated,
   KeyboardAvoidingView,
+  Platform,
   ScrollView,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -22,8 +24,13 @@ import Input from "@/app/components/Input"
 import { cepMask, removeNonNumeric } from "@/app/helpers"
 import { schema } from "@/app/schema/accouts"
 import api from "@/app/service/viaCep"
+import LottieView from "lottie-react-native"
+import LoadingAnimation from "@/app/assets/Loading.json"
+import Toast from "react-native-toast-message"
+import { Feather } from "@expo/vector-icons"
+import { colors } from "@/app/theme"
 
-type AndressType = {
+type AddressType = {
   address: string
   city: string
   number: string
@@ -32,50 +39,77 @@ type AndressType = {
   zipCode: string
 }
 
-export default function UserInfo() {
+export default function AddressInfo() {
   const { userInfo, setUserInfo } = useMultiStep()
-
   const [loading, setLoading] = useState(false)
+  const [loadingCep, setLoadingCep] = useState(false)
 
-  const {
-    control,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-  } = useForm({
-    defaultValues: userInfo,
-    resolver: yupResolver(schema) as any,
-  })
+  // Animação de fade in
+  const fadeAnim = React.useRef(new Animated.Value(0)).current
+
   useEffect(() => {
-    setLoading(false)
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start()
+
     return () => setLoading(false)
   }, [])
 
-  async function handleGetAndressCepApi() {
-    const zipCode = control._formValues?.zipCode || ""
-    const cepLimpo = zipCode.replace(/\D/g, "")
+  const { control, handleSubmit, setValue, watch } = useForm({
+    defaultValues: userInfo,
+    resolver: yupResolver(schema) as any,
+  })
+
+  const zipCode = watch("zipCode")
+
+  async function handleGetAddressByCep() {
+    const cepLimpo = zipCode?.replace(/\D/g, "") || ""
     if (!cepLimpo) return
 
     if (cepLimpo.length !== 8) {
-      alert("Digite o CEP válido com 8 dígitos")
+      Toast.show({
+        type: "error",
+        text1: "CEP inválido",
+        text2: "Digite um CEP válido com 8 dígitos",
+      })
       return
     }
 
+    setLoadingCep(true)
     try {
       const { data } = await api.get(`${cepLimpo}/json/`)
 
       if (data.erro) {
-        alert("CEP não encontrado")
+        Toast.show({
+          type: "error",
+          text1: "CEP não encontrado",
+          text2: "Verifique o CEP digitado",
+        })
         return
       }
+
       if (data.logradouro) setValue("address", data.logradouro)
       if (data.localidade) setValue("city", data.localidade)
       if (data.uf) setValue("state", data.uf)
-      if (data.cep) setValue("zipCode", data.cep)
+
+      Toast.show({
+        type: "success",
+        text1: "Endereço encontrado!",
+        text2: "Dados preenchidos automaticamente",
+      })
     } catch (err) {
-      alert("Erro ao buscar CEP. Tente novamente.")
+      Toast.show({
+        type: "error",
+        text1: "Erro ao buscar CEP",
+        text2: "Tente novamente mais tarde",
+      })
+    } finally {
+      setLoadingCep(false)
     }
   }
+
   function onSubmit(data: any) {
     setLoading(true)
     setUserInfo(data)
@@ -83,175 +117,150 @@ export default function UserInfo() {
       router.push("/(auth)/register/StepVehicles")
     }, 1200)
   }
+
   return (
     <View style={styles.container}>
       <ImageBackground source={fundoBg} style={{ flex: 1 }}>
         <View style={styles.overlay} />
         <SafeAreaView style={{ flex: 1, padding: 16 }}>
           <Header
-            title="Dados dos Enderco"
+            title="Dados do Endereço"
             onBackPress={() => router.replace("/(auth)/register/StepUser")}
           />
           <MultiStep
             currentStep={1}
             steps={["Usuário", "Endereco", "Veículo", "Acesso"]}
           />
-          <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
+
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+          >
             <ScrollView
-              contentContainerStyle={{ paddingBottom: 20 }}
+              contentContainerStyle={styles.scrollContent}
               showsHorizontalScrollIndicator={false}
               showsVerticalScrollIndicator={false}
             >
-              <View style={{ marginBottom: 8 }}>
-                <Controller
-                  control={control}
-                  name="zipCode"
-                  render={({ field: { onChange, value } }) => (
-                    <>
+              <Animated.View style={{ opacity: fadeAnim }}>
+                {/* Seção: CEP */}
+                <View style={styles.section}>
+                  <View style={styles.sectionHeader}>
+                    <View style={styles.sectionIconContainer}>
+                      <Text style={styles.sectionIcon}>📍</Text>
+                    </View>
+                    <Text style={styles.sectionTitle}>CEP</Text>
+                  </View>
+
+                  <View style={styles.cepContainer}>
+                    <View style={{ flex: 1 }}>
                       <Input
                         icon="map-pin"
                         placeholder="CEP"
-                        value={value}
-                        onChangeText={onChange}
+                        control={control}
+                        name="zipCode"
                         visualMask={cepMask}
                         unmask={removeNonNumeric}
-                        onBlur={handleGetAndressCepApi}
+                        keyboardType="numeric"
+                        containerStyle={styles.inputContainer}
+                      />
+                    </View>
+                    <TouchableOpacity
+                      style={styles.searchButton}
+                      onPress={handleGetAddressByCep}
+                      disabled={loadingCep}
+                    >
+                      {loadingCep ? (
+                        <Text style={styles.searchButtonText}>...</Text>
+                      ) : (
+                        <Feather name="search" size={20} color={colors.primary} />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Seção: Endereço Completo */}
+                <View style={styles.section}>
+                  <View style={styles.sectionHeader}>
+                    <View style={styles.sectionIconContainer}>
+                      <Text style={styles.sectionIcon}>🏠</Text>
+                    </View>
+                    <Text style={styles.sectionTitle}>Endereço Completo</Text>
+                  </View>
+
+                  <Input
+                    icon="map"
+                    placeholder="Endereço"
+                    control={control}
+                    name="address"
+                    containerStyle={styles.inputContainer}
+                  />
+
+                  <View style={styles.row}>
+                    <View style={{ flex: 2 }}>
+                      <Input
+                        icon="home"
+                        placeholder="Cidade"
+                        control={control}
+                        name="city"
+                        containerStyle={styles.inputContainer}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Input
+                        icon="flag"
+                        placeholder="UF"
+                        control={control}
+                        name="state"
+                        containerStyle={styles.inputContainer}
+                        autoCapitalize="characters"
+                        maxLength={2}
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.row}>
+                    <View style={{ flex: 1 }}>
+                      <Input
+                        icon="hash"
+                        placeholder="Número"
+                        control={control}
+                        name="number"
+                        containerStyle={styles.inputContainer}
                         keyboardType="numeric"
                       />
-                      {errors.zipCode && (
-                        <Text style={{ color: "red", marginLeft: 8 }}>
-                          {errors.zipCode.message}
-                        </Text>
-                      )}
-                    </>
-                  )}
-                />
-
-                <Text
-                  style={{
-                    fontWeight: "bold",
-                    fontSize: 16,
-
-                    marginBottom: 5,
-
-                    color: "#00FFB3",
-                  }}
-                >
-                  Endereço
-                </Text>
-                <Controller
-                  control={control}
-                  name="address"
-                  render={({ field: { onChange, value } }) => (
-                    <>
+                    </View>
+                    <View style={{ flex: 2 }}>
                       <Input
-                        icon="map"
-                        placeholder="Endereço"
-                        value={value}
-                        onChangeText={onChange}
+                        icon="info"
+                        placeholder="Complemento (opcional)"
+                        control={control}
+                        name="complement"
+                        containerStyle={styles.inputContainer}
                       />
-                      {errors.address && (
-                        <Text style={{ color: "red", marginLeft: 8 }}>
-                          {errors.address.message}
-                        </Text>
-                      )}
-                    </>
-                  )}
-                />
-                <View style={{ flexDirection: "row", gap: 8 }}>
-                  <View style={{ flex: 2 }}>
-                    <Controller
-                      control={control}
-                      name="city"
-                      render={({ field: { onChange, value } }) => (
-                        <>
-                          <Input
-                            icon="home"
-                            placeholder="Cidade"
-                            value={value}
-                            onChangeText={onChange}
-                          />
-                          {errors.city && (
-                            <Text style={{ color: "red", marginLeft: 8 }}>
-                              {errors.city.message}
-                            </Text>
-                          )}
-                        </>
-                      )}
-                    />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Controller
-                      control={control}
-                      name="state"
-                      render={({ field: { onChange, value } }) => (
-                        <>
-                          <Input
-                            icon="flag"
-                            placeholder="Estado"
-                            value={value}
-                            onChangeText={onChange}
-                          />
-                          {errors.state && (
-                            <Text style={{ color: "red", marginLeft: 8 }}>
-                              {errors.state.message}
-                            </Text>
-                          )}
-                        </>
-                      )}
-                    />
+                    </View>
                   </View>
                 </View>
-                <View style={{ flexDirection: "row", gap: 8 }}>
-                  <View style={{ flex: 1 }}>
-                    <Controller
-                      control={control}
-                      name="number"
-                      render={({ field: { onChange, value } }) => (
-                        <>
-                          <Input
-                            icon="hash"
-                            placeholder="Número"
-                            value={value}
-                            onChangeText={onChange}
-                            keyboardType="numeric"
-                          />
-                          {errors.number && (
-                            <Text style={{ color: "red", marginLeft: 8 }}>
-                              {errors.number.message}
-                            </Text>
-                          )}
-                        </>
-                      )}
-                    />
-                  </View>
-                  <View style={{ flex: 2 }}>
-                    <Controller
-                      control={control}
-                      name="complement"
-                      render={({ field: { onChange, value } }) => (
-                        <Input
-                          icon="info"
-                          placeholder="Complemento"
-                          value={value}
-                          onChangeText={onChange}
-                        />
-                      )}
-                    />
-                  </View>
-                </View>
-              </View>
+              </Animated.View>
             </ScrollView>
           </KeyboardAvoidingView>
+
           <Button
-            title="Veiculo"
+            title={loading ? "Carregando..." : "Continuar"}
             onPress={handleSubmit(onSubmit)}
             disabled={loading}
+            style={styles.button}
           />
 
           {loading && (
             <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color="#fff" />
+              <LottieView
+                source={LoadingAnimation}
+                autoPlay
+                loop
+                style={styles.lottieAnimation}
+                resizeMode="contain"
+              />
+              <Text style={styles.loadingText}>Processando...</Text>
             </View>
           )}
         </SafeAreaView>

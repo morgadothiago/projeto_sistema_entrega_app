@@ -12,16 +12,20 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { ImageBackground } from "expo-image"
 import { router } from "expo-router"
 import React, { useEffect, useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import {
-  ActivityIndicator,
+  Animated,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Text,
   View,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { styles } from "./styles"
+import LottieView from "lottie-react-native"
+import LoadingAnimation from "@/app/assets/Loading.json"
+import Toast from "react-native-toast-message"
 
 type VehicleTypeOption = {
   label: string
@@ -35,10 +39,20 @@ export default function VehiclesInfo() {
       defaultValues: userInfo,
     })
 
-  const [page] = useState(1)
-  const [limit] = useState(100)
   const [vehicleTypes, setVehicleTypes] = useState<VehicleTypeOption[]>([])
   const [loading, setLoading] = useState(false)
+  const [loadingTypes, setLoadingTypes] = useState(true)
+
+  // Animação de fade in
+  const fadeAnim = React.useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start()
+  }, [])
 
   // Observa o objeto selecionado
   const selectedVehicleTypeObj = watch("vehicleType")
@@ -48,20 +62,20 @@ export default function VehiclesInfo() {
   const year = watch("year")
   const color = watch("color")
 
-  // 🔹 Verifica se é bike
+  // Verifica se é bike
   const isBike = selectedVehicleTypeObj === "Bike"
 
-  // 🔹 Define se deve mostrar os inputs
+  // Define se deve mostrar os inputs
   const showVehicleInputs = selectedVehicleTypeObj && !isBike
 
-  // 🔹 Regra do botão
+  // Regra do botão
   const isButtonDisabled =
     !selectedVehicleTypeObj ||
     (!isBike && (!licensePlate || !brand || !model || !year || !color))
 
   async function loadVehicleData() {
     try {
-      setLoading(true)
+      setLoadingTypes(true)
       const response = await api.get("/vehicle-types", {
         headers: {
           "Content-Type": "application/json",
@@ -78,8 +92,13 @@ export default function VehiclesInfo() {
       )
       setVehicleTypes(formattedOptions)
     } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Erro ao carregar tipos de veículos",
+        text2: "Tente novamente mais tarde",
+      })
     } finally {
-      setLoading(false)
+      setLoadingTypes(false)
     }
   }
 
@@ -112,7 +131,9 @@ export default function VehiclesInfo() {
     }
 
     setUserInfo(dataToSave)
-    router.push("/(auth)/register/StepAcess")
+    setTimeout(() => {
+      router.push("/(auth)/register/StepAcess")
+    }, 1200)
   }
 
   return (
@@ -128,126 +149,141 @@ export default function VehiclesInfo() {
             currentStep={2}
             steps={["Usuário", "Endereco", "Veículo", "Acesso"]}
           />
+
           <KeyboardAvoidingView
             style={{ flex: 1 }}
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
           >
             <ScrollView
-              contentContainerStyle={{ paddingBottom: 20 }}
+              contentContainerStyle={styles.scrollContent}
               showsVerticalScrollIndicator={false}
             >
-              {loading && vehicleTypes.length === 0 ? (
-                <ActivityIndicator size="large" color="#fff" />
-              ) : (
-                <Controller
-                  control={control}
-                  name="vehicleType"
-                  rules={{ required: "Selecione um tipo de veículo" }}
-                  render={({ field: { onChange, value } }) => (
+              <Animated.View style={{ opacity: fadeAnim }}>
+                {/* Seção: Tipo de Veículo */}
+                <View style={styles.section}>
+                  <View style={styles.sectionHeader}>
+                    <View style={styles.sectionIconContainer}>
+                      <Text style={styles.sectionIcon}>🚗</Text>
+                    </View>
+                    <Text style={styles.sectionTitle}>Tipo de Veículo</Text>
+                  </View>
+
+                  {loadingTypes ? (
+                    <View style={styles.loadingContainer}>
+                      <LottieView
+                        source={LoadingAnimation}
+                        autoPlay
+                        loop
+                        style={{ width: 60, height: 60 }}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.loadingTypeText}>
+                        Carregando tipos...
+                      </Text>
+                    </View>
+                  ) : (
                     <AppPicker
-                      label="Tipo de Veículo"
-                      onValueChange={onChange}
-                      selectedValue={value}
+                      label="Selecione o tipo"
+                      onValueChange={(value) => setValue("vehicleType", value)}
+                      selectedValue={selectedVehicleTypeObj}
                       options={vehicleTypes}
                     />
                   )}
-                />
-              )}
+                </View>
 
-              {/* Inputs só aparecem se o veículo selecionado NÃO for bike */}
-              {showVehicleInputs && (
-                <>
-                  <Controller
-                    control={control}
-                    name="licensePlate"
-                    rules={{ required: !isBike && "A placa é obrigatória" }}
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <Input
-                        icon="credit-card"
-                        placeholder="Placa do Veículo (ABC1D23)"
-                        value={value}
-                        onChangeText={onChange}
-                        mask={licensePlateMask}
-                        onBlur={onBlur}
-                        autoCapitalize="characters"
-                      />
-                    )}
-                  />
-                  <Controller
-                    control={control}
-                    name="brand"
-                    rules={{ required: !isBike && "A marca é obrigatória" }}
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <Input
-                        icon="tag"
-                        placeholder="Marca"
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                      />
-                    )}
-                  />
-                  <Controller
-                    control={control}
-                    name="model"
-                    rules={{ required: !isBike && "O modelo é obrigatório" }}
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <Input
-                        icon="truck"
-                        placeholder="Modelo"
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                      />
-                    )}
-                  />
-                  <View style={{ flexDirection: "row", gap: 8 }}>
-                    <View style={{ flex: 1 }}>
-                      <Controller
-                        control={control}
-                        name="year"
-                        rules={{ required: !isBike && "O ano é obrigatório" }}
-                        render={({ field: { onChange, onBlur, value } }) => (
-                          <Input
-                            icon="calendar"
-                            placeholder="Ano"
-                            value={value?.toString() || ""}
-                            onChangeText={onChange}
-                            onBlur={onBlur}
-                            keyboardType="numeric"
-                          />
-                        )}
-                      />
+                {/* Seção: Informações do Veículo (só aparece se não for bike) */}
+                {showVehicleInputs && (
+                  <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                      <View style={styles.sectionIconContainer}>
+                        <Text style={styles.sectionIcon}>📋</Text>
+                      </View>
+                      <Text style={styles.sectionTitle}>
+                        Informações do Veículo
+                      </Text>
                     </View>
-                    <View style={{ flex: 1 }}>
-                      <Controller
-                        control={control}
-                        name="color"
-                        rules={{ required: !isBike && "A cor é obrigatória" }}
-                        render={({ field: { onChange, onBlur, value } }) => (
-                          <Input
-                            icon="droplet"
-                            placeholder="Cor"
-                            value={value}
-                            onChangeText={onChange}
-                            onBlur={onBlur}
-                          />
-                        )}
-                      />
+
+                    <Input
+                      icon="credit-card"
+                      placeholder="Placa do Veículo (ABC1D23)"
+                      control={control}
+                      name="licensePlate"
+                      mask={licensePlateMask}
+                      autoCapitalize="characters"
+                      containerStyle={styles.inputContainer}
+                    />
+
+                    <Input
+                      icon="tag"
+                      placeholder="Marca"
+                      control={control}
+                      name="brand"
+                      containerStyle={styles.inputContainer}
+                    />
+
+                    <Input
+                      icon="truck"
+                      placeholder="Modelo"
+                      control={control}
+                      name="model"
+                      containerStyle={styles.inputContainer}
+                    />
+
+                    <View style={styles.row}>
+                      <View style={{ flex: 1 }}>
+                        <Input
+                          icon="calendar"
+                          placeholder="Ano"
+                          control={control}
+                          name="year"
+                          containerStyle={styles.inputContainer}
+                          keyboardType="numeric"
+                          maxLength={4}
+                        />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Input
+                          icon="droplet"
+                          placeholder="Cor"
+                          control={control}
+                          name="color"
+                          containerStyle={styles.inputContainer}
+                        />
+                      </View>
                     </View>
                   </View>
-                </>
-              )}
+                )}
+
+                {/* Mensagem para Bike */}
+                {isBike && (
+                  <View style={styles.bikeMessage}>
+                    <Text style={styles.bikeMessageText}>
+                      ✅ Bike selecionada! Não é necessário informar dados do
+                      veículo.
+                    </Text>
+                  </View>
+                )}
+              </Animated.View>
             </ScrollView>
           </KeyboardAvoidingView>
+
           <Button
-            title="Ir para Informações de Acesso"
+            title={loading ? "Carregando..." : "Continuar"}
             onPress={handleSubmit(handleNextStep)}
             disabled={loading || isButtonDisabled}
+            style={styles.button}
           />
+
           {loading && (
             <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color="#fff" />
+              <LottieView
+                source={LoadingAnimation}
+                autoPlay
+                loop
+                style={styles.lottieAnimation}
+                resizeMode="contain"
+              />
+              <Text style={styles.loadingText}>Processando...</Text>
             </View>
           )}
         </SafeAreaView>
