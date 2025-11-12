@@ -27,12 +27,13 @@ import * as yup from "yup"
 
 import LoadingDocument from "./LoadingDocument"
 import LoadingDocumentSuccess from "./LoadingDocumentSuccess"
+import { cpfMask, removeNonNumeric } from "@/app/helpers"
 
 export default function Documents() {
   const { user, loading } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
-  const [submittedData, setSubmittedData] = useState<DocumentFormData | null>(null)
+  const [submittedData, setSubmittedData] = useState<DocumentFormData | null>()
 
   const {
     control,
@@ -48,6 +49,7 @@ export default function Documents() {
       documentType: "",
       documentImageUri: "",
       documentNumber: "",
+      description: "",
       fullName: "",
       cpf: "",
       orgaoEmissao: "",
@@ -100,9 +102,7 @@ export default function Documents() {
   }
 
   const onSubmit = async (data: DocumentFormData) => {
-    console.log(data)
     setIsSubmitting(true)
-
     try {
       const formData = new FormData()
       formData.append("type", data.documentType)
@@ -111,6 +111,15 @@ export default function Documents() {
         name: "document.jpeg",
         type: "image/jpeg",
       } as any)
+      formData.append("description", "")
+      formData.append("documentType", data.documentType)
+      formData.append("documentNumber", data.documentNumber || "")
+      formData.append("fullName", data.fullName || "")
+      formData.append("cpf", removeNonNumeric(data.cpf || ""))
+      formData.append("orgaoEmissao", data.orgaoEmissao || "")
+      if (data.cnhType) {
+        formData.append("cnhType", data.cnhType)
+      }
 
       await api.post("/deliveryman/documents", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -126,6 +135,7 @@ export default function Documents() {
         text2: "Documento enviado com sucesso 👌",
       })
     } catch (error) {
+      console.log("❌ Erro ao enviar documento:", error)
       setIsSubmitting(false)
       Toast.show({
         type: "error",
@@ -135,9 +145,17 @@ export default function Documents() {
     }
   }
 
-  const onErrors = () => {
-    if (errors.documentImageUri) {
-      Alert.alert("Erro", errors.documentImageUri.message)
+  const onErrors = (errors: any) => {
+    console.log("Validation Errors:", errors)
+    const errorMessages = Object.values(errors)
+      .map((error: any) => error.message)
+      .join("\n")
+    if (errorMessages) {
+      Toast.show({
+        type: "error",
+        text1: "Erro de Validação!",
+        text2: errorMessages,
+      })
     }
   }
 
@@ -233,6 +251,8 @@ export default function Documents() {
                 name="cpf"
                 placeholder="CPF"
                 placeholderTextColor={colors.buttons}
+                visualMask={cpfMask}
+                unmask={removeNonNumeric}
                 keyboardType="numeric"
               />
               <Input
@@ -266,6 +286,8 @@ export default function Documents() {
                 name="cpf"
                 placeholder="CPF"
                 placeholderTextColor={colors.buttons}
+                visualMask={cpfMask}
+                unmask={removeNonNumeric}
                 keyboardType="numeric"
               />
               <Text
@@ -306,7 +328,14 @@ export default function Documents() {
               borderRadius: 8,
             }}
           >
-            <Text style={{ color: colors.text, fontSize: 16, fontWeight: "bold", textAlign: "center" }}>
+            <Text
+              style={{
+                color: colors.text,
+                fontSize: 16,
+                fontWeight: "bold",
+                textAlign: "center",
+              }}
+            >
               Enviar
             </Text>
           </Pressable>

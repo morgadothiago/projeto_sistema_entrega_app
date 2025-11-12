@@ -19,18 +19,11 @@ export default function DeliveryDetails() {
 
   // Atualiza o state com o primeiro item do array data
 
-  console.log(code)
-
   async function GetDeliveryDetails() {
-    console.log("Entering GetDeliveryDetails function.")
     try {
       if (!code || !token) {
-        console.warn("Code or token is missing, cannot fetch delivery details.")
         return // Prevent API call if essential data is missing
       }
-
-      console.log("token:", token)
-      console.log("code:", code)
 
       const response = await api.get(`/delivery`, {
         headers: {
@@ -40,11 +33,8 @@ export default function DeliveryDetails() {
           code: code,
         },
       })
-      console.log("Full API response:", response)
-      console.log("response: delivery details", response.data.data)
       setDeliveryDetails(response.data.data[0])
     } catch (error) {
-      console.error("Erro ao buscar entrega:", error)
     }
   }
 

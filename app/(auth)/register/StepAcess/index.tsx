@@ -9,6 +9,7 @@ import { normalizeData } from "@/app/util/nomalizer"
 import { ImageBackground } from "expo-image"
 import Toast from "react-native-toast-message"
 
+import { router } from "expo-router"
 import React, { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import {
@@ -20,10 +21,7 @@ import {
   View,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import signinStyles from "../../Signin/styles"
 import { styles } from "./styles"
-import { Route } from "expo-router"
-import { router } from "expo-router"
 
 type AccessFormData = {
   email: string
@@ -57,27 +55,24 @@ export default function AccessStep() {
         email: data.email,
         password: data.password,
       }
-      
+
       // Normaliza e valida os dados antes de enviar
-      const normalizedData = normalizeData(userInfo, accessData);
-      
+      const normalizedData = normalizeData(userInfo, accessData)
+
       // envia para a API
       newAccount(normalizedData)
         .then((res) => {
           router.replace("/(auth)/Signin")
         })
-        .catch((err) => {
-          console.log("Erro no cadastro:", err.message)
-        })
+        .catch((err) => {})
         .finally(() => setLoading(false))
     } catch (error: any) {
-      console.log("Erro na validação:", error.message);
       Toast.show({
-        type: 'error',
-        text1: 'Erro na validação',
+        type: "error",
+        text1: "Erro na validação",
         text2: error.message,
-      });
-      setLoading(false);
+      })
+      setLoading(false)
     }
   }
 
@@ -123,7 +118,6 @@ export default function AccessStep() {
                       onBlur={onBlur}
                       keyboardType="email-address"
                       autoCapitalize="none"
-                      containerStyle={signinStyles.input}
                     />
                     {errors.email && (
                       <Text style={styles.error}>{errors.email.message}</Text>
@@ -151,7 +145,6 @@ export default function AccessStep() {
                       value={value}
                       onChangeText={onChange}
                       onBlur={onBlur}
-                      containerStyle={signinStyles.input}
                       secureTextEntry
                     />
                     {errors.password && (
@@ -181,7 +174,6 @@ export default function AccessStep() {
                       value={value}
                       onChangeText={onChange}
                       onBlur={onBlur}
-                      containerStyle={signinStyles.input}
                       secureTextEntry
                     />
                     {errors.confirmPassword && (

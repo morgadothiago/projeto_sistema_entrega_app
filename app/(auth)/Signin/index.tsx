@@ -2,6 +2,7 @@ import { useRouter } from "expo-router"
 import LottieView from "lottie-react-native"
 import React, { useEffect, useState } from "react"
 import {
+  Animated,
   Image,
   ImageBackground,
   Keyboard,
@@ -15,17 +16,19 @@ import {
 } from "react-native"
 
 import { yupResolver } from "@hookform/resolvers/yup"
-import { Controller, useForm } from "react-hook-form"
+import { useForm } from "react-hook-form"
 
+import { useAuth } from "@/app/context/AuthContext"
 import Toast from "react-native-toast-message"
 import fundoLogo from "../../assets/funndo.png"
 import Logo from "../../assets/logo.png"
+import { Button } from "../../components/Button"
 import Input from "../../components/Input"
 import { loginSchema } from "../../schema/loginSchema"
-import { api, login } from "../../service/api"
-import { FormData } from "../../types/FormData"
 import styles from "./styles"
-import { useAuth } from "@/app/context/AuthContext"
+import LoadingAnimation from "@/app/assets/Loading.json"
+import { colors } from "@/app/theme"
+import { Feather } from "@expo/vector-icons"
 
 interface LoginData {
   email: string
@@ -44,12 +47,30 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  // -----------------------
+  // Animação do logo
+  const fadeAnim = React.useRef(new Animated.Value(0)).current
+  const scaleAnim = React.useRef(new Animated.Value(0.3)).current
+
   // Controle de teclado
-  // -----------------------
   const [keyboardVisible, setKeyboardVisible] = useState(false)
 
   useEffect(() => {
+    // Animação de entrada do logo
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 10,
+        friction: 3,
+        useNativeDriver: true,
+      }),
+    ]).start()
+
+    // Listeners do teclado
     const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
       setKeyboardVisible(true)
     })
@@ -70,17 +91,14 @@ export default function LoginScreen() {
       Toast.show({
         type: "success",
         text1: "Sucesso!",
-        text2: "Você fez login corretamente 👌",
+        text2: "Você fez login corretamente",
       })
 
-      // espera 2 segundos mostrando loading + toast
       await new Promise((resolve) => setTimeout(resolve, 2000))
 
       setLoading(false)
       router.push("/(tabs)/home")
     } catch (error: any) {
-      console.log("Erro no login", error)
-
       Toast.show({
         type: "error",
         text1: "Erro no login",
@@ -95,7 +113,7 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior="padding" // funciona no Android e iOS
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ImageBackground
@@ -113,69 +131,84 @@ export default function LoginScreen() {
             <View
               style={[styles.content, { flex: 1, justifyContent: "center" }]}
             >
-              <Image source={Logo} style={styles.logo} />
+              {/* Logo com animação */}
+              <Animated.View
+                style={{
+                  opacity: fadeAnim,
+                  transform: [{ scale: scaleAnim }],
+                }}
+              >
+                <View style={styles.logoContainer}>
+                  <Image source={Logo} style={styles.logo} />
+                </View>
+              </Animated.View>
+
+              {/* Título de boas-vindas */}
+              <Text style={styles.welcomeTitle}>Bem-vindo de volta!</Text>
+              <Text style={styles.welcomeSubtitle}>
+                Faça login para continuar
+              </Text>
 
               <View style={styles.form}>
                 {/* E-mail */}
-                <Controller
+                <Input
+                  icon="mail"
+                  placeholder="E-mail"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  containerStyle={styles.inputContainer}
                   control={control}
                   name="email"
-                  rules={{ required: "E-mail é obrigatório" }}
-                  render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-                    <Input
-                      icon="mail"
-                      placeholder="E-mail"
-                      placeholderTextColor="#aaa"
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      containerStyle={styles.input}
-                    />
-                  )}
                 />
+
                 {/* Senha */}
-                <Controller
+                <Input
+                  icon="lock"
+                  placeholder="Senha"
+                  isPassword
+                  containerStyle={styles.inputContainer}
                   control={control}
                   name="password"
-                  rules={{ required: "Senha é obrigatória" }}
-                  render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-                    <Input
-                      icon="lock"
-                      placeholder="Senha"
-                      placeholderTextColor="#aaa"
-                      isPassword
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      containerStyle={styles.input}
-                    />
-                  )}
                 />
-                {errors.password && (
-                  <Text style={styles.error}>{errors.password.message}</Text>
-                )}
 
-                <TouchableOpacity
+                {/* Botão de login */}
+                <Button
                   style={[styles.button, loading && styles.buttonDisabled]}
+                  title={loading ? "Entrando..." : "Entrar"}
                   onPress={onSubmit}
                   disabled={loading}
-                >
-                  <Text style={styles.buttonText}>Entrar</Text>
-                </TouchableOpacity>
+                />
               </View>
 
               {/* Footer: escondido no Android quando o teclado está aberto */}
               {!(Platform.OS === "android" && keyboardVisible) && (
                 <View style={styles.footer}>
-                  <TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.linkButton}
+                    onPress={() =>
+                      router.push("/(auth)/ForgotPassword/sendEmail")
+                    }
+                  >
+                    <Feather
+                      name="help-circle"
+                      size={18}
+                      color={colors.buttons}
+                      style={{ marginRight: 6 }}
+                    />
                     <Text style={styles.linkText}>Esqueci minha senha</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
+                    style={styles.linkButton}
                     onPress={() => router.push("/register/StepUser")}
                   >
+                    <Feather
+                      name="user-plus"
+                      size={18}
+                      color={colors.buttons}
+                      style={{ marginRight: 6 }}
+                    />
                     <Text style={styles.linkText}>Cadastrar-se</Text>
                   </TouchableOpacity>
                 </View>
@@ -188,10 +221,10 @@ export default function LoginScreen() {
       {loading && (
         <View style={styles.loadingOverlay}>
           <LottieView
-            source={require("../../assets/Delivery Truck | Loading | Exporting-2.json")}
+            source={LoadingAnimation}
             autoPlay
             loop
-            style={styles.cartAnimation}
+            style={styles.lottieAnimation}
             resizeMode="contain"
           />
           <Text style={styles.loadingText}>Carregando...</Text>

@@ -25,8 +25,6 @@ export default function Delivery() {
   const router = useRouter()
   const [orders, setOrders] = useState<ApiOrder[]>([])
 
-  console.log("token:", token)
-
   const getAllDeliverys = async () => {
     try {
       const response = await api.get("/delivery", {
@@ -34,10 +32,8 @@ export default function Delivery() {
           Authorization: `Bearer ${token}`,
         },
       })
-      console.log("response:", response.data.data)
       setOrders(response.data.data)
     } catch (error) {
-      console.error("Erro ao buscar entregas:", error)
     }
   }
 

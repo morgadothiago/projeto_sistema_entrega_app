@@ -57,7 +57,6 @@ export function CustomTabs({ state, navigation }: CustomTabBarProps) {
               navigation.navigate(tab.name)
             }
           } catch (error) {
-            console.log("Erro na navegação:", error)
           }
         }
 

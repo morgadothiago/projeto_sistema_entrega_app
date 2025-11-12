@@ -16,6 +16,7 @@ import { useRouter } from "expo-router"
 import { useAuth } from "../context/AuthContext"
 import { colors } from "../theme"
 import { formatDateToBR } from "../util/masks"
+import { cpfMask, phoneMask, cepMask, dateMask, removeNonNumeric } from "../helpers"
 
 type FormData = {
   name: string
@@ -81,8 +82,6 @@ export default function EditProfile() {
   useEffect(() => {
     if (user) {
       setValue("name" as any, user?.DeliveryMan?.name || "")
-      console.log("Original DOB:", user?.DeliveryMan?.dob)
-      console.log("Formatted DOB:", formatDateToBR(user?.DeliveryMan?.dob))
       setValue("dob" as any, formatDateToBR(user?.DeliveryMan?.dob) || "")
       setValue("cpf" as any, user?.DeliveryMan?.cpf || "")
       setValue("phone" as any, user?.DeliveryMan?.phone || "")
@@ -113,7 +112,6 @@ export default function EditProfile() {
   }, [user, setValue])
 
   const onSubmit = (data: any) => {
-    console.log("Form submitted:", data)
     // Em uma aplicação real, você enviaria esses dados para uma API
     // e lidaria com feedback de sucesso/erro (por exemplo, usando Toast)
   }
@@ -150,14 +148,16 @@ export default function EditProfile() {
                   secureTextEntry: false,
                   keyboardType: "numeric",
                   disabled: true,
+                  mask: cpfMask,
                 },
                 {
                   label: "Data de Nascimento",
                   name: "dob",
                   icon: "calendar",
                   secureTextEntry: false,
-                  keyboardType: "default",
+                  keyboardType: "numeric",
                   disabled: true,
+                  mask: dateMask,
                 },
                 {
                   label: "Email",
@@ -173,6 +173,7 @@ export default function EditProfile() {
                   secureTextEntry: false,
                   keyboardType: "phone-pad",
                   disabled: false,
+                  mask: phoneMask,
                 },
               ],
             },
@@ -219,6 +220,7 @@ export default function EditProfile() {
                   secureTextEntry: false,
                   keyboardType: "numeric",
                   disabled: true,
+                  mask: cepMask,
                 },
                 {
                   label: "Cidade",

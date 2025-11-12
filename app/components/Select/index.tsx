@@ -23,6 +23,7 @@ type Props<T extends FieldValues> = {
   control?: Control<T>
   name?: Path<T>
   rules?: RegisterOptions<T, Path<T>>
+  disabled?: boolean
 }
 
 export default function Select<T extends FieldValues>({
@@ -34,6 +35,7 @@ export default function Select<T extends FieldValues>({
   control,
   name,
   rules,
+  disabled = false,
 }: Props<T>) {
   const processedOptions = options.map((option) => ({
     label: option.label,
@@ -53,7 +55,11 @@ export default function Select<T extends FieldValues>({
           <View style={styles.container}>
             {label ? <Text style={styles.label}>{label}</Text> : null}
 
-            <Pressable style={styles.selector} onPress={() => setVisible(true)}>
+            <Pressable
+              style={[styles.selector, disabled && styles.selectorDisabled]}
+              onPress={() => !disabled && setVisible(true)}
+              disabled={disabled}
+            >
               <View
                 style={{
                   flexDirection: "row",
@@ -61,10 +67,14 @@ export default function Select<T extends FieldValues>({
                   alignItems: "center",
                 }}
               >
-                <Text style={styles.selectorText}>
+                <Text style={[styles.selectorText, disabled && styles.selectorTextDisabled]}>
                   {processedOptions.find((o) => o.value === value)?.label ?? placeholder}
                 </Text>
-                <Feather name="arrow-down-circle" size={30} color={colors.buttons} />
+                <Feather
+                  name="arrow-down-circle"
+                  size={30}
+                  color={disabled ? colors.secondary + "80" : colors.buttons}
+                />
               </View>
             </Pressable>
 
@@ -123,7 +133,11 @@ export default function Select<T extends FieldValues>({
     <View style={styles.container}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
 
-      <Pressable style={styles.selector} onPress={() => setVisible(true)}>
+      <Pressable
+        style={[styles.selector, disabled && styles.selectorDisabled]}
+        onPress={() => !disabled && setVisible(true)}
+        disabled={disabled}
+      >
         <View
           style={{
             flexDirection: "row",
@@ -131,10 +145,14 @@ export default function Select<T extends FieldValues>({
             alignItems: "center",
           }}
         >
-          <Text style={styles.selectorText}>
+          <Text style={[styles.selectorText, disabled && styles.selectorTextDisabled]}>
             {processedOptions.find((o) => o.value === selectedValue)?.label ?? placeholder}
           </Text>
-          <Feather name="arrow-down-circle" size={30} color={colors.buttons} />
+          <Feather
+            name="arrow-down-circle"
+            size={30}
+            color={disabled ? colors.secondary + "80" : colors.buttons}
+          />
         </View>
       </Pressable>
 
@@ -193,7 +211,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginTop: 30,
   },
+  selectorDisabled: {
+    backgroundColor: colors.secondary + "40",
+    opacity: 0.6,
+  },
   selectorText: { fontSize: 16, color: colors.buttons, fontWeight: "600" },
+  selectorTextDisabled: {
+    color: colors.secondary + "80",
+  },
   modalOverlay: {
     flex: 1,
     justifyContent: "flex-end",

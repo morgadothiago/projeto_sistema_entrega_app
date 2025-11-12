@@ -63,7 +63,6 @@ export default function Home() {
           return
         }
       } catch (error) {
-        console.log(error)
         router.replace("/(auth)/Signin")
       } finally {
         setIsLoading(false)

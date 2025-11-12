@@ -5,6 +5,7 @@ import Input from "@/app/components/Input"
 import { MultiStep } from "@/app/components/MultiStep"
 import AppPicker from "@/app/components/Select"
 import { useMultiStep } from "@/app/context/MultiStepContext"
+import { licensePlateMask } from "@/app/helpers"
 import { api } from "@/app/service/api"
 import { RegisterFormData } from "@/app/types/UserData"
 import AsyncStorage from "@react-native-async-storage/async-storage"
@@ -20,7 +21,6 @@ import {
   View,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import signinStyles from "../../Signin/styles"
 import { styles } from "./styles"
 
 type VehicleTypeOption = {
@@ -78,7 +78,6 @@ export default function VehiclesInfo() {
       )
       setVehicleTypes(formattedOptions)
     } catch (error) {
-      console.error("Erro ao carregar os tipos de veículo:", error)
     } finally {
       setLoading(false)
     }
@@ -113,7 +112,6 @@ export default function VehiclesInfo() {
     }
 
     setUserInfo(dataToSave)
-    console.log("Dados coletados até o StepVehicles:", dataToSave)
     router.push("/(auth)/register/StepAcess")
   }
 
@@ -166,12 +164,12 @@ export default function VehiclesInfo() {
                     render={({ field: { onChange, onBlur, value } }) => (
                       <Input
                         icon="credit-card"
-                        placeholder="Placa do Veículo"
+                        placeholder="Placa do Veículo (ABC1D23)"
                         value={value}
                         onChangeText={onChange}
+                        mask={licensePlateMask}
                         onBlur={onBlur}
                         autoCapitalize="characters"
-                        containerStyle={signinStyles.input}
                       />
                     )}
                   />
@@ -186,7 +184,6 @@ export default function VehiclesInfo() {
                         value={value}
                         onChangeText={onChange}
                         onBlur={onBlur}
-                        containerStyle={signinStyles.input}
                       />
                     )}
                   />
@@ -201,7 +198,6 @@ export default function VehiclesInfo() {
                         value={value}
                         onChangeText={onChange}
                         onBlur={onBlur}
-                        containerStyle={signinStyles.input}
                       />
                     )}
                   />
@@ -215,11 +211,10 @@ export default function VehiclesInfo() {
                           <Input
                             icon="calendar"
                             placeholder="Ano"
-                            value={value?.toString() || ''}
+                            value={value?.toString() || ""}
                             onChangeText={onChange}
                             onBlur={onBlur}
                             keyboardType="numeric"
-                            containerStyle={signinStyles.input}
                           />
                         )}
                       />
@@ -236,7 +231,6 @@ export default function VehiclesInfo() {
                             value={value}
                             onChangeText={onChange}
                             onBlur={onBlur}
-                            containerStyle={signinStyles.input}
                           />
                         )}
                       />

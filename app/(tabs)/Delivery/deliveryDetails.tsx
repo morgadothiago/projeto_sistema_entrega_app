@@ -54,7 +54,6 @@ export default function DeliveryDetails() {
         }
         setDeliveryDetails(order)
       } catch (error) {
-        console.error("Erro ao buscar entrega:", error)
       }
     }
 
@@ -65,7 +64,6 @@ export default function DeliveryDetails() {
   }, [token, code, signOut])
 
   function handleAceptPress() {
-    console.log("Aceitar entrega")
   }
 
   async function handleGolMapPress() {
@@ -108,7 +106,6 @@ export default function DeliveryDetails() {
         }
       }
     } catch (error) {
-      console.error("Erro ao abrir o mapa:", error)
       Alert.alert("Erro", "Não foi possível abrir o mapa.")
     }
   }
@@ -124,7 +121,6 @@ export default function DeliveryDetails() {
   }
 
   function handleCheckoutPress() {
-    console.log("Finalizar entrega")
   }
 
   if (!deliveryDetails) {

@@ -2,53 +2,67 @@ import * as yup from "yup"
 
 type PaymentType = "Pix" | "Transferencia"
 
-export type PaymentFormData = {
-  paymentType?: PaymentType
-  pixKey?: string
-  pixKeyType?: "CPF" | "CNPJ" | "Email" | "Telefone" | "Chave Aleatória"
-  bankName?: string
-  agency?: string
-  accountNumber?: string
-}
-
-export const PaymentInfoSchema = yup.object().shape({
+export const PaymentInfoSchema = yup.object({
   paymentType: yup
     .string()
-    .oneOf(["Pix", "Transferencia"], "Selecione um tipo de pagamento válido")
+    .oneOf(["Pix", "Transferencia"] as const, "Selecione um tipo de pagamento válido")
     .required("Selecione o tipo de pagamento"),
 
   // Campos para Pix
   pixKey: yup.string().when("paymentType", {
     is: "Pix",
     then: (schema) => schema.required("Informe a chave Pix"),
-    otherwise: (schema) => schema.notRequired(),
+    otherwise: (schema) => schema.optional(),
   }),
   pixKeyType: yup.string().when("paymentType", {
     is: "Pix",
     then: (schema) =>
       schema
         .oneOf(
-          ["CPF", "CNPJ", "Email", "Telefone", "Chave Aleatória"],
+          ["CPF", "CNPJ", "EMAIL", "PHONE", "RANDOM"] as const,
           "Selecione um tipo de chave Pix válido"
         )
         .required("Selecione o tipo de chave Pix"),
-    otherwise: (schema) => schema.notRequired(),
+    otherwise: (schema) => schema.optional(),
   }),
 
   // Campos para Transferência
   bankName: yup.string().when("paymentType", {
     is: "Transferencia",
     then: (schema) => schema.required("Informe o nome do banco"),
-    otherwise: (schema) => schema.notRequired(),
+    otherwise: (schema) => schema.optional(),
   }),
   agency: yup.string().when("paymentType", {
     is: "Transferencia",
     then: (schema) => schema.required("Informe a agência"),
-    otherwise: (schema) => schema.notRequired(),
+    otherwise: (schema) => schema.optional(),
   }),
   accountNumber: yup.string().when("paymentType", {
     is: "Transferencia",
     then: (schema) => schema.required("Informe o número da conta"),
-    otherwise: (schema) => schema.notRequired(),
+    otherwise: (schema) => schema.optional(),
   }),
+  bankCode: yup.string().optional(),
+  agencyDigit: yup.string().optional(),
+  accountDigit: yup.string().optional(),
+  accountType: yup.string().optional(),
+  holderName: yup.string().optional(),
+  cpf: yup.string().optional(),
+  isDefault: yup.boolean().optional(),
 })
+
+export type PaymentFormData = {
+  paymentType: PaymentType | undefined
+  pixKey?: string | null
+  pixKeyType?: string | null
+  bankName?: string | null
+  agency?: string | null
+  accountNumber?: string | null
+  bankCode?: string | null
+  agencyDigit?: string | null
+  accountDigit?: string | null
+  accountType?: string | null
+  holderName?: string | null
+  cpf?: string | null
+  isDefault?: boolean | null
+}

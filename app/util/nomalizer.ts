@@ -122,7 +122,6 @@ export function normalizeData(userInfo: any, accessData: any) {
       )
     }
   } catch (error) {
-    console.error("Erro ao formatar data de nascimento:", error)
     throw new Error(
       "Formato de data de nascimento inválido. Use o formato DD/MM/AAAA."
     )

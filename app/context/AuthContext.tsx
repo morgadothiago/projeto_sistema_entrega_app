@@ -46,7 +46,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(JSON.parse(storagedUser))
         }
       } catch (error) {
-        console.log("Erro ao carregar storage:", error)
       } finally {
         setLoading(false)
       }
@@ -63,8 +62,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
       })
 
-      console.log("Dados vindo da api:", responseToken, userData)
-
       // Atualiza estado
       setUser(userData)
       setToken(responseToken)
@@ -75,10 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Persiste no AsyncStorage (chaves padronizadas com '@')
       await saveItem("@token", responseToken)
       await saveItem("@user", JSON.stringify(userData))
-
-      console.log("Token salvo com sucesso:", responseToken)
     } catch (error: any) {
-      console.log("Erro no login:", error.response?.data || error.message)
       throw error
     }
   }
@@ -92,7 +86,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await removeItem("@user")
       delete api.defaults.headers.common["Authorization"]
     } catch (error) {
-      console.log("Erro ao fazer logout:", error)
     }
   }
 

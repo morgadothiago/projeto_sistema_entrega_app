@@ -32,6 +32,7 @@ export const UserInfoSchema = yup.object().shape({
     then: (schema) => schema.required("Informe o número do documento"),
     otherwise: (schema) => schema.notRequired(),
   }),
+  description: yup.string().notRequired(),
   fullName: yup.string().when("documentType", {
     is: (val: DocumentType) => val === "RG" || val === "CNH",
     then: (schema) => schema.required("Informe o nome completo"),

@@ -16,10 +16,10 @@ import {
   View,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import signinStyles from "../../Signin/styles"
 import { styles } from "./styles"
 
 import Input from "@/app/components/Input"
+import { cepMask, removeNonNumeric } from "@/app/helpers"
 import { schema } from "@/app/schema/accouts"
 import api from "@/app/service/viaCep"
 
@@ -113,9 +113,10 @@ export default function UserInfo() {
                         placeholder="CEP"
                         value={value}
                         onChangeText={onChange}
+                        visualMask={cepMask}
+                        unmask={removeNonNumeric}
                         onBlur={handleGetAndressCepApi}
                         keyboardType="numeric"
-                        containerStyle={signinStyles.input}
                       />
                       {errors.zipCode && (
                         <Text style={{ color: "red", marginLeft: 8 }}>
@@ -148,7 +149,6 @@ export default function UserInfo() {
                         placeholder="Endereço"
                         value={value}
                         onChangeText={onChange}
-                        containerStyle={signinStyles.input}
                       />
                       {errors.address && (
                         <Text style={{ color: "red", marginLeft: 8 }}>
@@ -170,7 +170,6 @@ export default function UserInfo() {
                             placeholder="Cidade"
                             value={value}
                             onChangeText={onChange}
-                            containerStyle={signinStyles.input}
                           />
                           {errors.city && (
                             <Text style={{ color: "red", marginLeft: 8 }}>
@@ -192,7 +191,6 @@ export default function UserInfo() {
                             placeholder="Estado"
                             value={value}
                             onChangeText={onChange}
-                            containerStyle={signinStyles.input}
                           />
                           {errors.state && (
                             <Text style={{ color: "red", marginLeft: 8 }}>
@@ -217,7 +215,6 @@ export default function UserInfo() {
                             value={value}
                             onChangeText={onChange}
                             keyboardType="numeric"
-                            containerStyle={signinStyles.input}
                           />
                           {errors.number && (
                             <Text style={{ color: "red", marginLeft: 8 }}>
@@ -238,7 +235,6 @@ export default function UserInfo() {
                           placeholder="Complemento"
                           value={value}
                           onChangeText={onChange}
-                          containerStyle={signinStyles.input}
                         />
                       )}
                     />

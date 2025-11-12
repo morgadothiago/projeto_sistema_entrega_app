@@ -31,11 +31,7 @@ export async function login(data: LoginData): Promise<LoginResponse> {
       data
     )
 
-    console.log(response.data.token)
-
     const { token, user } = response.data
-
-    console.log("Meu token da api ", token)
 
     if (!token || !user) {
       throw new Error("Resposta inválida do servidor.")
@@ -56,8 +52,6 @@ export async function login(data: LoginData): Promise<LoginResponse> {
 
     return { token, user }
   } catch (error: any) {
-    console.log("Erro no login:", error.response?.data || error.message)
-
     Toast.show({
       type: "error",
       text1: "Erro no login",
@@ -84,11 +78,6 @@ export async function newAccount(data: any) {
 
     return response.data
   } catch (error: any) {
-    console.error(
-      "Erro ao criar nova conta:",
-      error.response?.data || error.message
-    )
-
     // Verifica se é um erro de validação local (do normalizeData)
     if (error.message && !error.response) {
       Toast.show({
@@ -175,7 +164,6 @@ api.interceptors.request.use(
     return config
   },
   (error) => {
-    console.error("Erro ao enviar requisição:", error)
     return Promise.reject(error)
   }
 )
@@ -186,8 +174,6 @@ api.interceptors.response.use(
     if (error.response) {
       const status = error.response.status
       const message = error.response.data?.message
-
-      console.log(`Erro da API [${status}]:`, message || error.response.data)
 
       // 🔒 Token inválido ou expirado
       if (status === 401) {
@@ -210,14 +196,12 @@ api.interceptors.response.use(
         })
       }
     } else if (error.request) {
-      console.log("Sem resposta do servidor:", error.request)
       Toast.show({
         type: "error",
         text1: "Falha na conexão",
         text2: "Não foi possível se conectar ao servidor.",
       })
     } else {
-      console.log("Erro inesperado:", error.message)
       Toast.show({
         type: "error",
         text1: "Erro inesperado",
@@ -230,3 +214,24 @@ api.interceptors.response.use(
 )
 
 export { api }
+
+export async function createPaymentInfo(data: any) {
+  try {
+    const response = await api.post("/payment-info", data)
+
+    Toast.show({
+      type: "success",
+      text1: "Sucesso!",
+      text2: "Informações de pagamento salvas com sucesso!",
+    })
+
+    return response.data
+  } catch (error: any) {
+    Toast.show({
+      type: "error",
+      text1: "Erro ao salvar informações de pagamento",
+      text2: error.response?.data?.message || "Verifique os dados enviados.",
+    })
+    throw error
+  }
+}

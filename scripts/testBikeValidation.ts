@@ -26,8 +26,6 @@ const accessData = {
 
 try {
   const result = normalizeData(bikeUserInfo, accessData)
-  console.log("Normalização concluída para Bike:", result)
 } catch (error) {
-  console.error("A validação não deveria falhar para Bike:", error)
   process.exit(1)
 }
