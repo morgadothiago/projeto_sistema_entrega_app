@@ -1,10 +1,13 @@
+import fundoBg from "@/app/assets/funndo.png"
 import logo from "@/app/assets/logo.png"
 import { Image } from "expo-image"
 import * as ImagePicker from "expo-image-picker"
-import { router } from "expo-router"
 import React, { useEffect, useState } from "react"
 import {
   Alert,
+  Animated,
+  ImageBackground,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,16 +17,33 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Button } from "../components/Button"
 import { Header } from "../components/Header"
-import Input from "../components/Input"
 import { useAuth } from "../context/AuthContext"
-import { paymentsData } from "../mocks/paymentsData"
 import { colors } from "../theme"
+
+type BankAccount = {
+  pixKey?: string
+  pixKeyType?: string
+  bankName?: string
+  agency?: string
+  account?: string
+  accountType?: string
+}
 
 export default function Profile() {
   const { user, loading, signOut } = useAuth()
   const [activeTab, setActiveTab] = useState("Usuario")
   const [profileImage, setProfileImage] = useState<string | null>(null)
-  const [payments, setPayments] = useState(paymentsData)
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([])
+  const fadeAnim = React.useRef(new Animated.Value(0)).current
+
+  // Animação de fade in
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start()
+  }, [])
 
   // 🔹 Pedir permissão de câmera e galeria
   useEffect(() => {
@@ -70,259 +90,109 @@ export default function Profile() {
   }
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView>
-        <Header title="Perfil" tabs={true} tabsTitle="Meu Perfil" />
+    <ImageBackground
+      source={fundoBg}
+      style={styles.container}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay} />
+      <SafeAreaView style={{ flex: 1 }}>
+        <Header title="Perfil" tabs={false} tabsTitle="Meu Perfil" />
 
-        <View style={styles.content}>
-          <View style={styles.imageContainer}>
-            <Pressable onPress={chooseImageOption}>
-              <Image
-                source={profileImage ? { uri: profileImage } : logo}
-                style={{ width: 90, height: 90, borderRadius: 45 }}
-              />
-            </Pressable>
-          </View>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <Animated.View style={{ opacity: fadeAnim }}>
+            <View style={styles.imageContainer}>
+              <Pressable onPress={chooseImageOption}>
+                <Image
+                  source={profileImage ? { uri: profileImage } : logo}
+                  style={{ width: 90, height: 90, borderRadius: 45 }}
+                />
+              </Pressable>
+            </View>
 
-          <View
-            style={{
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              width: "100%",
-              backgroundColor: colors.support,
-              padding: 16,
-              borderRadius: 12,
-              gap: 10,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                justifyContent: "space-between",
-                width: "100%",
-              }}
-            >
-              <Text>Nome</Text>
-              <Text>{user?.DeliveryMan?.name}</Text>
+            <View style={styles.infoCard}>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>👤 Nome</Text>
+                <Text style={styles.infoValue}>{user?.DeliveryMan?.name}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>✉️ Email</Text>
+                <Text style={styles.infoValue}>{user?.email}</Text>
+              </View>
             </View>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                justifyContent: "space-between",
-                width: "100%",
-              }}
-            >
-              <Text>Email</Text>
-              <Text>{user?.email}</Text>
-            </View>
-          </View>
 
-          {/* Abas */}
-          <View style={styles.tabInfoUser}>
-            <Pressable
-              style={[
-                styles.tabButton,
-                activeTab === "Usuario" && styles.activeTabButton,
-              ]}
-              onPress={() => setActiveTab("Usuario")}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === "Usuario" && styles.activeTabText,
-                ]}
-              >
-                Usuario
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[
-                styles.tabButton,
-                activeTab === "Veiculo" && styles.activeTabButton,
-              ]}
-              onPress={() => setActiveTab("Veiculo")}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === "Veiculo" && styles.activeTabText,
-                ]}
-              >
-                Veiculo
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[
-                styles.tabButton,
-                activeTab === "Banco" && styles.activeTabButton,
-              ]}
-              onPress={() => setActiveTab("Banco")}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === "Banco" && styles.activeTabText,
-                ]}
-              >
-                banco
-              </Text>
-            </Pressable>
-          </View>
+            <View>
+              <Text>Area De direcionamento para</Text>
+            </View>
 
-          {/* Conteúdo das abas */}
-          {activeTab === "Usuario" && (
-            <View style={styles.tabContent}>
-              <Input
-                value={user?.DeliveryMan?.name}
-                editable={false}
-                icon="user"
-                containerStyle={{ width: "100%" }}
-              />
-              <Input
-                value={user?.email}
-                editable={false}
-                icon="mail"
-                containerStyle={{ width: "100%" }}
-              />
-              <Input
-                value={user?.DeliveryMan?.cpf}
-                editable={false}
-                icon="credit-card"
-                containerStyle={{ width: "100%" }}
-              />
-              <Input
-                value={user?.DeliveryMan?.phone}
-                editable={false}
-                icon="phone"
-                containerStyle={{ width: "100%" }}
-              />
+            <View>
+              <Button title="Sair" onPress={() => signOut()} />
             </View>
-          )}
-          {activeTab === "Veiculo" && (
-            <View style={styles.tabContent}>
-              <Input
-                value={user?.DeliveryMan?.Vehicle.model}
-                editable={false}
-                icon="info"
-                containerStyle={{ width: "100%" }}
-              />
-              <Input
-                value={user?.DeliveryMan?.Vehicle.licensePlate}
-                editable={false}
-                icon="credit-card"
-                containerStyle={{ width: "100%" }}
-              />
-              <Input
-                value={user?.DeliveryMan?.Vehicle.model}
-                editable={false}
-                icon="truck"
-                containerStyle={{ width: "100%" }}
-              />
-              <Input
-                value={user?.DeliveryMan?.Vehicle.year}
-                editable={false}
-                icon="calendar"
-                containerStyle={{ width: "100%" }}
-              />
-            </View>
-          )}
-          {activeTab === "Banco" && (
-            <View style={styles.tabContent}>
-              <ScrollView
-                contentContainerStyle={{
-                  flex: 1,
-                  width: "100%",
-                }}
-              >
-                {payments.map((payment, index) => (
-                  <View key={index} style={styles.paymentContainer}>
-                    <Input
-                      value={payment.bankName}
-                      editable={false}
-                      icon="dollar-sign"
-                      containerStyle={{ width: "100%" }}
-                    />
-                    <Input
-                      value={payment.agency}
-                      editable={false}
-                      icon="map-pin"
-                      containerStyle={{ width: "100%" }}
-                    />
-                    <Input
-                      value={payment.account}
-                      editable={false}
-                      icon="credit-card"
-                      containerStyle={{ width: "100%" }}
-                    />
-                    <Input
-                      value={payment.accountType}
-                      editable={false}
-                      icon="tag"
-                      containerStyle={{ width: "100%" }}
-                    />
-                    <Input
-                      value={payment.holderName}
-                      editable={false}
-                      icon="user"
-                      containerStyle={{ width: "100%" }}
-                    />
-                    <Input
-                      value={payment.cpf}
-                      editable={false}
-                      icon="file-text"
-                      containerStyle={{ width: "100%" }}
-                    />
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-
-          <View style={styles.buttonContainer}>
-            <Button
-              title="Editar Perfil"
-              onPress={() => router.push("/(tabs)/edit-profile")}
-            />
-            <Button title="Sair" onPress={() => signOut()} />
-          </View>
-        </View>
+          </Animated.View>
+        </ScrollView>
       </SafeAreaView>
-    </View>
+    </ImageBackground>
   )
 }
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   content: {
-    height: "100%",
-    alignItems: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    backgroundColor: colors.secondary,
-    paddingTop: 24, // Adjusted from 50 to 24
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 10,
   },
   imageContainer: {
-    width: 120, // Adjusted from 100 to 120
-    height: 120, // Adjusted from 100 to 120
+    width: 120,
+    height: 120,
     backgroundColor: colors.primary,
-    borderRadius: 60, // Adjusted from 70 to 60
+    borderRadius: 60,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 3,
-    borderColor: colors.support,
-    marginBottom: 10,
+    borderWidth: 4,
+    borderColor: colors.buttons,
+    marginBottom: 16,
+    alignSelf: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.buttons,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
   },
-
-  userNameText: {
-    color: colors.text,
-    fontSize: 20, // Adjusted from 18 to 20
+  infoCard: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "rgba(0, 255, 179, 0.3)",
+  },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: colors.secondary,
+    fontWeight: "600",
+  },
+  infoValue: {
+    fontSize: 14,
+    color: colors.buttons,
     fontWeight: "bold",
   },
   tabInfoUser: {
@@ -330,53 +200,100 @@ export const styles = StyleSheet.create({
     justifyContent: "space-around",
     alignItems: "center",
     width: "100%",
-    marginTop: 26,
+    marginBottom: 20,
     gap: 10,
-
-    borderRadius: 12, // Added borderRadius
-    padding: 8, // Added padding
   },
   tabButton: {
-    paddingVertical: 12, // Adjusted from 10 to 12
-    paddingHorizontal: 18, // Adjusted from 15 to 18
-    borderRadius: 8,
-    backgroundColor: colors.primary,
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(0, 255, 179, 0.2)",
   },
   tabText: {
     color: colors.secondary,
-    fontSize: 18, // Adjusted from 16 to 18
+    fontSize: 14,
     fontWeight: "bold",
+    textTransform: "capitalize",
   },
   activeTabButton: {
     backgroundColor: colors.buttons,
+    borderColor: colors.buttons,
   },
   activeTabText: {
     color: colors.primary,
   },
   tabContent: {
     width: "100%",
-    alignItems: "center",
-    padding: 8,
-    borderRadius: 12,
-    gap: 10,
-    marginBottom: 26,
+    marginBottom: 20,
   },
-
-  paymentContainer: {
-    width: "100%",
-    flexDirection: "column",
-    justifyContent: "center",
+  section: {
+    marginBottom: 20,
+  },
+  sectionHeader: {
+    flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    backgroundColor: "red",
+    marginBottom: 16,
+    paddingHorizontal: 8,
+  },
+  sectionIcon: {
+    fontSize: 20,
+    marginRight: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: colors.buttons,
+    letterSpacing: 0.5,
+  },
+  inputContainer: {
+    marginBottom: 12,
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.buttons,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  accountCard: {
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(0, 255, 179, 0.2)",
+  },
+  accountTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: colors.buttons,
+    marginBottom: 12,
+  },
+  emptyText: {
+    textAlign: "center",
+    color: colors.secondary,
+    fontSize: 14,
+    fontStyle: "italic",
+    paddingVertical: 20,
   },
   buttonContainer: {
     width: "100%",
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 10,
+
+    alignItems: "flex-start",
+
+    paddingBottom: 20,
+    marginTop: 10,
   },
 })

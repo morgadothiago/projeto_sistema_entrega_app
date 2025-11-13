@@ -198,6 +198,15 @@ export const dateMask = (value: string): string => {
 }
 
 /**
+ * Remove máscara de placa de veículo
+ */
+export const removeLicensePlateMask = (value: string): string => {
+  if (!value) return ""
+  // Remove espaços e caracteres especiais, mantém apenas letras e números em maiúsculas
+  return value.replace(/[^A-Za-z0-9]/g, "").toUpperCase()
+}
+
+/**
  * Máscara para placa de veículo (Mercosul: ABC1D23 ou antiga: ABC-1234)
  */
 export const licensePlateMask = (value: string): string => {

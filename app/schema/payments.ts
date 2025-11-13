@@ -37,17 +37,33 @@ export const PaymentInfoSchema = yup.object({
     then: (schema) => schema.required("Informe a agência"),
     otherwise: (schema) => schema.optional(),
   }),
-  accountNumber: yup.string().when("paymentType", {
+  account: yup.string().when("paymentType", {
     is: "Transferencia",
     then: (schema) => schema.required("Informe o número da conta"),
+    otherwise: (schema) => schema.optional(),
+  }),
+  accountType: yup.string().when("paymentType", {
+    is: "Transferencia",
+    then: (schema) => schema.required("Selecione o tipo de conta"),
+    otherwise: (schema) => schema.optional(),
+  }),
+  holderName: yup.string().when("paymentType", {
+    is: "Transferencia",
+    then: (schema) => schema.required("Informe o nome do titular"),
+    otherwise: (schema) => schema.optional(),
+  }),
+  cpf: yup.string().when("paymentType", {
+    is: "Transferencia",
+    then: (schema) =>
+      schema
+        .required("Informe o CPF do titular")
+        .min(11, "CPF deve ter 11 dígitos")
+        .max(14, "CPF inválido"),
     otherwise: (schema) => schema.optional(),
   }),
   bankCode: yup.string().optional(),
   agencyDigit: yup.string().optional(),
   accountDigit: yup.string().optional(),
-  accountType: yup.string().optional(),
-  holderName: yup.string().optional(),
-  cpf: yup.string().optional(),
   isDefault: yup.boolean().optional(),
 })
 
@@ -57,7 +73,7 @@ export type PaymentFormData = {
   pixKeyType?: string | null
   bankName?: string | null
   agency?: string | null
-  accountNumber?: string | null
+  account?: string | null
   bankCode?: string | null
   agencyDigit?: string | null
   accountDigit?: string | null

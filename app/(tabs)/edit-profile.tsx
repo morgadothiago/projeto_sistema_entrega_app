@@ -1,6 +1,10 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import {
+  Animated,
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
   SectionList,
   StyleSheet,
   Text,
@@ -8,15 +12,25 @@ import {
   View,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
+import Toast from "react-native-toast-message"
 
+import fundoBg from "@/app/assets/funndo.png"
+import LoadingAnimation from "@/app/assets/Loading.json"
+import LottieView from "lottie-react-native"
 import { Header } from "../components/Header"
 import Input from "../components/Input"
 
 import { useRouter } from "expo-router"
 import { useAuth } from "../context/AuthContext"
+import {
+  cepMask,
+  cpfMask,
+  dateMask,
+  phoneMask,
+  removeNonNumeric,
+} from "../helpers"
 import { colors } from "../theme"
 import { formatDateToBR } from "../util/masks"
-import { cpfMask, phoneMask, cepMask, dateMask, removeNonNumeric } from "../helpers"
 
 type FormData = {
   name: string
@@ -46,11 +60,24 @@ type FieldItem = {
   keyboardType?: string
   disabled?: boolean
   mask?: (value: string) => string
+  visualMask?: (value: string) => string
+  unmask?: (value: string) => string
 }
 
 export default function EditProfile() {
   const { user } = useAuth()
   const router = useRouter()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const fadeAnim = React.useRef(new Animated.Value(0)).current
+
+  // Animação de fade in
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start()
+  }, [])
 
   const {
     control,
@@ -111,278 +138,394 @@ export default function EditProfile() {
     }
   }, [user, setValue])
 
-  const onSubmit = (data: any) => {
-    // Em uma aplicação real, você enviaria esses dados para uma API
-    // e lidaria com feedback de sucesso/erro (por exemplo, usando Toast)
+  const onSubmit = async (data: any) => {
+    setIsSubmitting(true)
+    try {
+      console.log("📤 Dados enviados ao backend (SEM máscara):")
+      console.log(JSON.stringify(data, null, 2))
+      console.log("")
+      console.log("✅ CPF sem máscara:", data.cpf)
+      console.log("✅ Telefone sem máscara:", data.phone)
+      console.log("✅ CEP sem máscara:", data.zipCode)
+      console.log("✅ Data sem máscara:", data.dob)
+
+      // Simular chamada de API
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+
+      Toast.show({
+        type: "success",
+        text1: "Sucesso!",
+        text2: "Perfil atualizado com sucesso",
+      })
+
+      setTimeout(() => {
+        router.push("/(tabs)/profile")
+      }, 1500)
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Erro",
+        text2: "Não foi possível atualizar o perfil",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Header
-        title="Editar perfil"
-        onBackPress={() => router.push("/(tabs)/profile")}
-        tabs={true}
-        tabsTitle="Editar perfil"
-      />
+    <ImageBackground
+      source={fundoBg}
+      style={styles.container}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay} />
+      <SafeAreaView style={{ flex: 1 }}>
+        <Header
+          title="Editar perfil"
+          onBackPress={() => router.push("/(tabs)/profile")}
+          tabs={true}
+          tabsTitle="Editar perfil"
+        />
 
-      <View style={styles.contentContainer}>
-        <SectionList<FieldItem>
-          keyExtractor={(item) => item.name}
-          showsVerticalScrollIndicator={false}
-          sections={[
-            {
-              title: "Dados Pessoais",
-              data: [
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+            <SectionList<FieldItem>
+              keyExtractor={(item) => item.name}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.contentContainer}
+              style={{ flex: 1 }}
+              sections={[
                 {
-                  label: "Nome",
-                  name: "name",
-                  icon: "user",
-                  secureTextEntry: false,
-                  keyboardType: "default",
-                  disabled: false,
+                  title: "👤 Dados Pessoais",
+                  data: [
+                    {
+                      label: "Nome",
+                      name: "name",
+                      icon: "user",
+                      secureTextEntry: false,
+                      keyboardType: "default",
+                      disabled: false,
+                    },
+                    {
+                      label: "CPF",
+                      name: "cpf",
+                      icon: "id-card",
+                      secureTextEntry: false,
+                      keyboardType: "numeric",
+                      disabled: true,
+                      visualMask: cpfMask,
+                      unmask: removeNonNumeric,
+                    },
+                    {
+                      label: "Data de Nascimento",
+                      name: "dob",
+                      icon: "calendar",
+                      secureTextEntry: false,
+                      keyboardType: "numeric",
+                      disabled: true,
+                      visualMask: dateMask,
+                      unmask: removeNonNumeric,
+                    },
+                    {
+                      label: "Email",
+                      name: "email",
+                      keyboardType: "email-address",
+                      icon: "mail",
+                      secureTextEntry: false,
+                    },
+                    {
+                      label: "Telefone",
+                      name: "phone",
+                      icon: "phone",
+                      secureTextEntry: false,
+                      keyboardType: "phone-pad",
+                      disabled: false,
+                      visualMask: phoneMask,
+                      unmask: removeNonNumeric,
+                    },
+                  ],
                 },
                 {
-                  label: "CPF",
-                  name: "cpf",
-                  icon: "id-card",
-                  secureTextEntry: false,
-                  keyboardType: "numeric",
-                  disabled: true,
-                  mask: cpfMask,
-                },
-                {
-                  label: "Data de Nascimento",
-                  name: "dob",
-                  icon: "calendar",
-                  secureTextEntry: false,
-                  keyboardType: "numeric",
-                  disabled: true,
-                  mask: dateMask,
-                },
-                {
-                  label: "Email",
-                  name: "email",
-                  keyboardType: "email-address",
-                  icon: "mail",
-                  secureTextEntry: false,
-                },
-                {
-                  label: "Telefone",
-                  name: "phone",
-                  icon: "phone",
-                  secureTextEntry: false,
-                  keyboardType: "phone-pad",
-                  disabled: false,
-                  mask: phoneMask,
-                },
-              ],
-            },
-            {
-              title: "Endereço",
-              data: [
-                {
-                  label: "Rua",
-                  name: "street",
-                  icon: "map-pin",
-                  secureTextEntry: false,
-                  keyboardType: "default",
-                  disabled: false,
-                },
-                {
-                  label: "Número",
-                  name: "number",
-                  keyboardType: "numeric",
-                  icon: "hash",
-                  secureTextEntry: false,
+                  title: "📍 Endereço",
+                  data: [
+                    {
+                      label: "Rua",
+                      name: "street",
+                      icon: "map-pin",
+                      secureTextEntry: false,
+                      keyboardType: "default",
+                      disabled: false,
+                    },
+                    {
+                      label: "Número",
+                      name: "number",
+                      keyboardType: "numeric",
+                      icon: "hash",
+                      secureTextEntry: false,
 
-                  disabled: false,
+                      disabled: false,
+                    },
+                    {
+                      label: "Complemento",
+                      name: "complement",
+                      icon: "info",
+                      secureTextEntry: false,
+                      keyboardType: "default",
+                      disabled: false,
+                    },
+                    {
+                      label: "Bairro",
+                      name: "neighborhood",
+                      icon: "map",
+                      secureTextEntry: false,
+                      disabled: true,
+                      keyboardType: "default",
+                    },
+                    {
+                      label: "CEP",
+                      name: "zipCode",
+                      icon: "map-pin",
+                      secureTextEntry: false,
+                      keyboardType: "numeric",
+                      disabled: true,
+                      visualMask: cepMask,
+                      unmask: removeNonNumeric,
+                    },
+                    {
+                      label: "Cidade",
+                      name: "city",
+                      icon: "globe",
+                      secureTextEntry: false,
+                      keyboardType: "default",
+                      disabled: true,
+                    },
+                    {
+                      label: "Estado",
+                      name: "state",
+                      icon: "map",
+                      secureTextEntry: false,
+                      keyboardType: "default",
+                      disabled: true,
+                    },
+                  ],
                 },
                 {
-                  label: "Complemento",
-                  name: "complement",
-                  icon: "info",
-                  secureTextEntry: false,
-                  keyboardType: "default",
-                  disabled: false,
+                  title: "🚗 Veículo",
+                  data: [
+                    {
+                      label: "Marca",
+                      name: "brand",
+                      icon: "truck",
+                      secureTextEntry: false,
+                      keyboardType: "default",
+                      disabled: false,
+                    },
+                    {
+                      label: "Modelo",
+                      name: "model",
+                      icon: "truck",
+                      secureTextEntry: false,
+                      keyboardType: "default",
+                      disabled: false,
+                    },
+                    {
+                      label: "Ano",
+                      name: "year",
+                      icon: "calendar",
+                      secureTextEntry: false,
+                      keyboardType: "numeric",
+                      disabled: false,
+                    },
+                    {
+                      label: "Placa",
+                      name: "licensePlate",
+                      icon: "tag",
+                      secureTextEntry: false,
+                      keyboardType: "default",
+                      disabled: false,
+                    },
+                    {
+                      label: "Cor",
+                      name: "color",
+                      icon: "droplet",
+                      secureTextEntry: false,
+                      keyboardType: "default",
+                    },
+                  ],
                 },
-                {
-                  label: "Bairro",
-                  name: "neighborhood",
-                  icon: "map",
-                  secureTextEntry: false,
-                  disabled: true,
-                  keyboardType: "default",
-                },
-                {
-                  label: "CEP",
-                  name: "zipCode",
-                  icon: "map-pin",
-                  secureTextEntry: false,
-                  keyboardType: "numeric",
-                  disabled: true,
-                  mask: cepMask,
-                },
-                {
-                  label: "Cidade",
-                  name: "city",
-                  icon: "globe",
-                  secureTextEntry: false,
-                  keyboardType: "default",
-                  disabled: true,
-                },
-                {
-                  label: "Estado",
-                  name: "state",
-                  icon: "map",
-                  secureTextEntry: false,
-                  keyboardType: "default",
-                  disabled: true,
-                },
-              ],
-            },
-            {
-              title: "Veículo",
-              data: [
-                {
-                  label: "Marca",
-                  name: "brand",
-                  icon: "truck",
-                  secureTextEntry: false,
-                  keyboardType: "default",
-                  disabled: false,
-                },
-                {
-                  label: "Modelo",
-                  name: "model",
-                  icon: "truck",
-                  secureTextEntry: false,
-                  keyboardType: "default",
-                  disabled: false,
-                },
-                {
-                  label: "Ano",
-                  name: "year",
-                  icon: "calendar",
-                  secureTextEntry: false,
-                  keyboardType: "numeric",
-                  disabled: false,
-                },
-                {
-                  label: "Placa",
-                  name: "licensePlate",
-                  icon: "tag",
-                  secureTextEntry: false,
-                  keyboardType: "default",
-                  disabled: false,
-                },
-                {
-                  label: "Cor",
-                  name: "color",
-                  icon: "droplet",
-                  secureTextEntry: false,
-                  keyboardType: "default",
-                },
-              ],
-            },
-          ]}
-          renderItem={({ item }) => (
-            <View style={styles.itemContainer}>
-              <Controller
-                control={control}
-                name={item.name as any}
-                render={({ field: { onChange, onBlur, value } }) => (
+              ]}
+              renderItem={({ item }) => (
+                <View style={styles.itemContainer}>
                   <Input
-                    onBlur={onBlur}
-                    onChangeText={(text) => {
-                      if (item.mask) {
-                        onChange(item.mask(text))
-                      } else {
-                        onChange(text)
-                      }
-                    }}
-                    value={value as any | undefined}
+                    control={control}
+                    name={item.name as any}
                     placeholder={item.label}
+                    placeholderTextColor={colors.support}
                     secureTextEntry={item.secureTextEntry}
                     icon={item.icon as any}
+                    visualMask={item.visualMask}
+                    unmask={item.unmask}
                     mask={item.mask}
+                    editable={!item.disabled}
+                    containerStyle={styles.inputStyle}
+                    keyboardType={item.keyboardType as any}
                   />
-                )}
-              />
-              {errors[item.name as keyof typeof errors] && (
-                <Text style={styles.errorText}>
-                  {errors[item.name as keyof typeof errors]?.message}
-                </Text>
+                  {errors[item.name as keyof typeof errors] && (
+                    <Text style={styles.errorText}>
+                      {errors[item.name as keyof typeof errors]?.message}
+                    </Text>
+                  )}
+                </View>
               )}
+              renderSectionHeader={({ section: { title } }) => (
+                <View style={styles.sectionHeaderContainer}>
+                  <Text style={styles.sectionHeader}>{title}</Text>
+                </View>
+              )}
+              stickySectionHeadersEnabled={false}
+            />
+
+            <View style={styles.buttonFixedContainer}>
+              <TouchableOpacity
+                onPress={handleSubmit(onSubmit)}
+                style={[
+                  styles.saveButton,
+                  isSubmitting && styles.saveButtonDisabled,
+                ]}
+                disabled={isSubmitting}
+              >
+                <Text style={styles.saveButtonText}>
+                  {isSubmitting ? "Salvando..." : "Salvar Alterações"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+
+          {isSubmitting && (
+            <View style={styles.loadingOverlay}>
+              <LottieView
+                source={LoadingAnimation}
+                autoPlay
+                loop
+                style={styles.lottieAnimation}
+                resizeMode="contain"
+              />
+              <Text style={styles.loadingText}>Salvando alterações...</Text>
             </View>
           )}
-          renderSectionHeader={({ section: { title } }) => (
-            <Text style={styles.sectionHeader}>{title}</Text>
-          )}
-        />
-        <TouchableOpacity
-          onPress={handleSubmit(onSubmit)}
-          style={styles.saveButton}
-        >
-          <Text
-            style={{
-              color: colors.primary,
-              fontSize: 16,
-              fontWeight: "bold",
-            }}
-          >
-            Salvar Alterações
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </ImageBackground>
   )
 }
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary,
   },
-  headerContainer: {
-    backgroundColor: colors.primary,
-    marginVertical: 18,
-    paddingHorizontal: 18,
-    marginBottom: 5,
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   contentContainer: {
-    paddingHorizontal: 18,
-    backgroundColor: colors.secondary,
-    height: "85%",
-    paddingVertical: 50,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 120, // Espaço para o botão fixo
+  },
+  sectionHeaderContainer: {
+    marginTop: 10,
+    marginBottom: 16,
   },
   sectionHeader: {
-    backgroundColor: colors.primary,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
-    color: colors.secondary,
-    marginBottom: 18,
-    borderRadius: 8,
-    gap: 20,
+    color: colors.buttons,
+    letterSpacing: 0.5,
   },
   itemContainer: {
-    backgroundColor: colors.support,
+    marginBottom: 14,
+  },
+  inputStyle: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginBottom: 18,
-    borderRadius: 8,
+    paddingVertical: 14,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.buttons,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
   },
   errorText: {
-    color: "red",
+    color: "#FF3B30",
     fontSize: 12,
     marginTop: 4,
+    marginLeft: 8,
+    fontWeight: "600",
+  },
+  buttonFixedContainer: {
+    position: "absolute",
+    bottom: Platform.OS === "ios" ? 90 : 80, // Acima das tabs
+    left: 0,
+    right: 0,
+    backgroundColor: "transparent",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   saveButton: {
     backgroundColor: colors.buttons,
-    margin: 18,
-    paddingVertical: 12,
+    paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 8,
+    borderRadius: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.buttons,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  saveButtonDisabled: {
+    opacity: 0.6,
+  },
+  saveButtonText: {
+    color: colors.primary,
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+  },
+  lottieAnimation: {
+    width: 200,
+    height: 200,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: "600",
+    color: colors.buttons,
+    letterSpacing: 0.5,
   },
 })

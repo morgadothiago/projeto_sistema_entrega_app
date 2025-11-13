@@ -3,7 +3,12 @@ import LoadingAnimation from "@/app/assets/Loading.json"
 import { Header } from "@/app/components/Header"
 import Input from "@/app/components/Input"
 import Select from "@/app/components/Select"
-import { applyPixKeyMask, removePixKeyMask } from "@/app/helpers/masks"
+import {
+  applyPixKeyMask,
+  cpfMask,
+  removeNonNumeric,
+  removePixKeyMask,
+} from "@/app/helpers/masks"
 import {
   detectPixKeyType,
   getPixKeyTypeDescription,
@@ -44,7 +49,7 @@ type TransferenciaPaymentData = {
   paymentType: "Transferencia"
   bankName: string | null
   agency: string | null
-  accountNumber: string | null
+  account: string | null
   bankCode: string | null
   agencyDigit: string | null
   accountDigit: string | null
@@ -89,9 +94,15 @@ export default function Payments() {
       paymentType: undefined,
       pixKey: "",
       pixKeyType: "",
+      bankCode: "",
       bankName: "",
       agency: "",
-      accountNumber: "",
+      agencyDigit: "",
+      account: "",
+      accountDigit: "",
+      accountType: undefined,
+      holderName: "",
+      cpf: "",
     },
   })
 
@@ -139,6 +150,28 @@ export default function Payments() {
   const paymentType = watch("paymentType")
   const pixKey = watch("pixKey")
   const pixKeyType = watch("pixKeyType")
+
+  // Limpa campos quando troca o tipo de pagamento
+  React.useEffect(() => {
+    if (paymentType === "Pix") {
+      // Limpa campos de transferência
+      setValue("bankCode", "")
+      setValue("bankName", "")
+      setValue("agency", "")
+      setValue("agencyDigit", "")
+      setValue("account", "")
+      setValue("accountDigit", "")
+      setValue("accountType", undefined)
+      setValue("holderName", "")
+      setValue("cpf", "")
+      console.log("🧹 Campos de Transferência limpos")
+    } else if (paymentType === "Transferencia") {
+      // Limpa campos de Pix
+      setValue("pixKey", "")
+      setValue("pixKeyType", "")
+      console.log("🧹 Campos de Pix limpos")
+    }
+  }, [paymentType, setValue])
 
   // Detecta o tipo de chave quando o pixKey muda
   React.useEffect(() => {
@@ -195,26 +228,61 @@ export default function Payments() {
         console.log("\n" + "=".repeat(60) + "\n")
       } else if (data.paymentType === "Transferencia") {
         // Validação: Se for Transferência, garantir que os campos obrigatórios existem
-        if (!data.bankName || !data.agency || !data.accountNumber) {
+        if (
+          !data.bankName ||
+          !data.agency ||
+          !data.account ||
+          !data.accountType ||
+          !data.holderName ||
+          !data.cpf
+        ) {
           throw new Error("Dados de Transferência incompletos")
         }
+
+        // Remove a máscara do CPF antes de enviar
+        const cleanCpf = removeNonNumeric(data.cpf)
 
         // Se for Transferência, envia APENAS dados bancários (sem campos null de PIX)
         dataToSend = {
           paymentType: "Transferencia",
+          bankCode: data.bankCode || null,
           bankName: data.bankName,
           agency: data.agency,
-          accountNumber: data.accountNumber,
-          accountType: "CHECKING",
+          agencyDigit: data.agencyDigit || null,
+          account: data.account,
+          accountDigit: data.accountDigit || null,
+          accountType: data.accountType,
+          holderName: data.holderName,
+          cpf: cleanCpf,
         }
 
         console.log("\n🏦 TIPO DE PAGAMENTO: TRANSFERÊNCIA BANCÁRIA")
         console.log("\n📊 Dados Bancários:")
-        console.log("  🏛️  Banco:", data.bankName)
-        console.log("  🔢 Agência:", data.agency)
-        console.log("  💳 Conta:", data.accountNumber)
-        console.log("\n📤 Dados que serão enviados para API:")
+        console.log("  🏦 Código do Banco:", data.bankCode || "N/A")
+        console.log("  🏛️  Nome do Banco:", data.bankName)
+        console.log(
+          "  🔢 Agência:",
+          data.agency + (data.agencyDigit ? `-${data.agencyDigit}` : "")
+        )
+        console.log(
+          "  💳 Conta:",
+          data.account + (data.accountDigit ? `-${data.accountDigit}` : "")
+        )
+        console.log("  📋 Tipo de Conta:", data.accountType)
+        console.log("\n👤 Dados do Titular:")
+        console.log("  📝 Nome:", data.holderName)
+        console.log("  🆔 CPF (com máscara):", data.cpf)
+        console.log("  ✅ CPF (sem máscara):", cleanCpf)
+        console.log("\n⚠️  ATENÇÃO: Dados de Pix NÃO serão enviados:")
+        console.log("  ❌ pixKey: NÃO incluído")
+        console.log("  ❌ pixKeyType: NÃO incluído")
+        console.log(
+          "\n📤 Dados que serão enviados para API (APENAS Transferência):"
+        )
         console.log(JSON.stringify(dataToSend, null, 2))
+        console.log(
+          "\n✅ Confirmação: Objeto contém apenas dados bancários, SEM Pix"
+        )
         console.log("\n" + "=".repeat(60) + "\n")
       } else {
         throw new Error("Tipo de pagamento não selecionado")
@@ -396,16 +464,8 @@ export default function Payments() {
 
                     <Input<PaymentFormData>
                       control={control as any}
-                      name="bankName"
-                      placeholder="Nome do Banco"
-                      containerStyle={styles.inputContainer}
-                      icon="home"
-                    />
-
-                    <Input<PaymentFormData>
-                      control={control as any}
-                      name="agency"
-                      placeholder="Agência (ex: 1234)"
+                      name="bankCode"
+                      placeholder="Código do Banco (ex: 001)"
                       keyboardType="numeric"
                       containerStyle={styles.inputContainer}
                       icon="hash"
@@ -413,8 +473,104 @@ export default function Payments() {
 
                     <Input<PaymentFormData>
                       control={control as any}
-                      name="accountNumber"
-                      placeholder="Número da Conta (ex: 12345-6)"
+                      name="bankName"
+                      placeholder="Nome do Banco (ex: Banco do Brasil)"
+                      containerStyle={styles.inputContainer}
+                      icon="home"
+                    />
+
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        gap: 10,
+                        marginBottom: 14,
+                      }}
+                    >
+                      <View style={{ flex: 2 }}>
+                        <Input<PaymentFormData>
+                          control={control as any}
+                          name="agency"
+                          placeholder="Agência (ex: 1234)"
+                          keyboardType="numeric"
+                          containerStyle={styles.inputContainer}
+                          icon="hash"
+                        />
+                      </View>
+
+                      <View style={{ flex: 1 }}>
+                        <Input<PaymentFormData>
+                          control={control as any}
+                          name="agencyDigit"
+                          placeholder="Dígito"
+                          keyboardType="numeric"
+                          containerStyle={styles.inputContainer}
+                          maxLength={1}
+                        />
+                      </View>
+                    </View>
+
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        gap: 10,
+                        marginBottom: 14,
+                      }}
+                    >
+                      <View style={{ flex: 2 }}>
+                        <Input<PaymentFormData>
+                          control={control as any}
+                          name="account"
+                          placeholder="Número da Conta"
+                          keyboardType="numeric"
+                          containerStyle={styles.inputContainer}
+                          icon="credit-card"
+                        />
+                      </View>
+
+                      <View style={{ flex: 1 }}>
+                        <Input<PaymentFormData>
+                          control={control as any}
+                          name="accountDigit"
+                          placeholder="Dígito"
+                          keyboardType="numeric"
+                          containerStyle={styles.inputContainer}
+                          maxLength={1}
+                        />
+                      </View>
+                    </View>
+
+                    <Select<PaymentFormData>
+                      control={control as any}
+                      name="accountType"
+                      options={[
+                        { label: "Conta Corrente", value: "CHECKING" },
+                        { label: "Conta Poupança", value: "SAVINGS" },
+                      ]}
+                      placeholder="Tipo de Conta"
+                    />
+
+                    <View style={styles.sectionHeader}>
+                      <View style={styles.sectionIconContainer}>
+                        <Text style={styles.sectionIcon}>👤</Text>
+                      </View>
+                      <Text style={styles.sectionTitle}>Titular da Conta</Text>
+                    </View>
+
+                    <Input<PaymentFormData>
+                      control={control as any}
+                      name="holderName"
+                      placeholder="Nome Completo do Titular"
+                      containerStyle={styles.inputContainer}
+                      icon="user"
+                    />
+
+                    <Input<PaymentFormData>
+                      control={control as any}
+                      name="cpf"
+                      placeholder="CPF do Titular (000.000.000-00)"
+                      keyboardType="numeric"
+                      visualMask={cpfMask}
+                      unmask={removeNonNumeric}
                       containerStyle={styles.inputContainer}
                       icon="credit-card"
                     />

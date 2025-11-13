@@ -5,7 +5,7 @@ import Input from "@/app/components/Input"
 import { MultiStep } from "@/app/components/MultiStep"
 import AppPicker from "@/app/components/Select"
 import { useMultiStep } from "@/app/context/MultiStepContext"
-import { licensePlateMask } from "@/app/helpers"
+import { licensePlateMask, removeLicensePlateMask } from "@/app/helpers"
 import { api } from "@/app/service/api"
 import { RegisterFormData } from "@/app/types/UserData"
 import AsyncStorage from "@react-native-async-storage/async-storage"
@@ -128,6 +128,9 @@ export default function VehiclesInfo() {
       delete dataToSave.model
       delete dataToSave.year
       delete dataToSave.color
+    } else {
+      console.log("📤 Placa enviada SEM máscara:", dataToSave.licensePlate)
+      console.log("✅ Formato limpo (apenas letras e números):", dataToSave.licensePlate)
     }
 
     setUserInfo(dataToSave)
@@ -208,7 +211,8 @@ export default function VehiclesInfo() {
                       placeholder="Placa do Veículo (ABC1D23)"
                       control={control}
                       name="licensePlate"
-                      mask={licensePlateMask}
+                      visualMask={licensePlateMask}
+                      unmask={removeLicensePlateMask}
                       autoCapitalize="characters"
                       containerStyle={styles.inputContainer}
                     />

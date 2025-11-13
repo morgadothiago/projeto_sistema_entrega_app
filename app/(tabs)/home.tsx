@@ -60,23 +60,41 @@ export default function Home() {
 
         console.log("📋 Dados do usuário:", JSON.stringify(data, null, 2))
 
-        // Verifica se o usuário está ativo
-        const isActive = data?.status === "ACTIVE"
+        // Verifica se tem documentos cadastrados
+        const hasDocuments =
+          data?.DeliveryMan?.Documents &&
+          data.DeliveryMan.Documents.length > 0
 
-        console.log("🔍 Verificação de status:")
-        console.log("  📊 Status do usuário:", data?.status)
-        console.log("  ✅ Está ativo?", isActive ? "Sim" : "Não")
+        // Verifica se tem conta bancária cadastrada
+        const hasBankAccount =
+          data?.DeliveryMan?.BankAccounts &&
+          data.DeliveryMan.BankAccounts.length > 0
 
-        // Se não estiver ativo, redireciona para completar cadastro
-        if (!isActive) {
+        console.log("🔍 Verificação de cadastro:")
+        console.log("  📊 Status da API:", data?.status)
+        console.log(
+          "  📄 Documentos:",
+          hasDocuments
+            ? `✅ ${data.DeliveryMan.Documents.length} cadastrado(s)`
+            : "❌ Nenhum"
+        )
+        console.log(
+          "  💳 Contas bancárias:",
+          hasBankAccount
+            ? `✅ ${data.DeliveryMan.BankAccounts.length} cadastrada(s)`
+            : "❌ Nenhuma"
+        )
+
+        // Se não tiver documentos OU conta bancária, redireciona para completar
+        if (!hasDocuments || !hasBankAccount) {
           console.log(
-            `⚠️  Status é "${data?.status}", redirecionando para LoadingDocuments`
+            "⚠️  Cadastro incompleto, redirecionando para LoadingDocuments"
           )
           router.replace("/(auth)/LoadingDocuments")
           return
         }
 
-        console.log("✅ Status ACTIVE, acesso liberado à aplicação")
+        console.log("✅ Cadastro completo, acesso liberado à aplicação")
       } catch (error) {
         console.log("❌ Erro ao carregar dados:", error)
         router.replace("/(auth)/Signin")

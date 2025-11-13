@@ -7,6 +7,7 @@ export {
   removeNonNumeric,
   removeMask,
   removePixKeyMask,
+  removeLicensePlateMask,
   cpfMask,
   cnpjMask,
   phoneMask,
