@@ -58,11 +58,27 @@ export default function Home() {
         const data = response.data
         setDeliveryManData(data)
 
-        if (!data?.bankAccount || !data?.documents) {
+        console.log("📋 Dados do usuário:", JSON.stringify(data, null, 2))
+
+        // Verifica se o usuário está ativo
+        const isActive = data?.status === "ACTIVE"
+
+        console.log("🔍 Verificação de status:")
+        console.log("  📊 Status do usuário:", data?.status)
+        console.log("  ✅ Está ativo?", isActive ? "Sim" : "Não")
+
+        // Se não estiver ativo, redireciona para completar cadastro
+        if (!isActive) {
+          console.log(
+            `⚠️  Status é "${data?.status}", redirecionando para LoadingDocuments`
+          )
           router.replace("/(auth)/LoadingDocuments")
           return
         }
+
+        console.log("✅ Status ACTIVE, acesso liberado à aplicação")
       } catch (error) {
+        console.log("❌ Erro ao carregar dados:", error)
         router.replace("/(auth)/Signin")
       } finally {
         setIsLoading(false)
