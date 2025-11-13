@@ -77,7 +77,7 @@ export default function SendEmailForm() {
 
       // Aguarda um pouco e volta para o login
       setTimeout(() => {
-        router.back()
+        router.push("/(auth)/ForgotPassword/ConfirmNewPassword")
       }, 3000)
     } catch (error: any) {
       Toast.show({

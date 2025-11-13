@@ -15,12 +15,52 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 10,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  sectionIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(0, 255, 179, 0.15)",
     justifyContent: "center",
-
-    height: "100%",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  sectionIcon: {
+    fontSize: 18,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: colors.buttons,
+    letterSpacing: 0.5,
+  },
+  descriptionText: {
+    fontSize: 14,
+    color: colors.secondary,
+    marginBottom: 20,
+    lineHeight: 20,
+    opacity: 0.9,
+  },
+  buttonContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  buttonText: {
+    color: colors.primary,
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
   },
   iconContainer: {
     alignItems: "center",
@@ -98,11 +138,10 @@ export const styles = StyleSheet.create({
     }),
   },
   button: {
-    width: "100%",
-    borderRadius: 12,
-    paddingVertical: 16,
     backgroundColor: colors.buttons,
-    marginTop: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: "center",
     ...Platform.select({
       ios: {
         shadowColor: colors.buttons,
