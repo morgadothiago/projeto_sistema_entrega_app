@@ -1,5 +1,5 @@
 import { Header } from "@/app/components/Header"
-import { useRouter, useLocalSearchParams } from "expo-router"
+import { useLocalSearchParams, useRouter } from "expo-router"
 import React, { useState } from "react"
 import {
   Animated,
@@ -25,8 +25,7 @@ import styles from "./style"
 
 import LoadingAnimation from "@/app/assets/Loading.json"
 import Input from "@/app/components/Input"
-import { colors } from "@/app/theme"
-import { resetPassword } from "@/app/service/api"
+import { api } from "@/app/service/api"
 
 interface ConfirmNewPasswordData {
   newPassword: string
@@ -35,8 +34,8 @@ interface ConfirmNewPasswordData {
 
 export default function ConfirmNewPassword() {
   const router = useRouter()
-  const { email } = useLocalSearchParams<{ email: string }>()
   const [loading, setLoading] = useState(false)
+  const { email } = useLocalSearchParams() as { email: string }
 
   // Animação de fade in
   const fadeAnim = React.useRef(new Animated.Value(0)).current
@@ -66,27 +65,54 @@ export default function ConfirmNewPassword() {
     Keyboard.dismiss()
 
     try {
-      if (!email) {
+      console.log(data)
+
+      if (data.newPassword !== data.confirmPassword) {
         Toast.show({
           type: "error",
-          text1: "Erro",
-          text2: "Email não encontrado. Por favor, tente novamente.",
+          text1: "Erro ao alterar senha",
+          text2: "As senhas não coincidem.",
+          visibilityTime: 4000,
         })
-        setLoading(false)
         return
       }
 
-      console.log("📝 Enviando para API:", { email, newPassword: data.newPassword })
+      const response = api.post(
+        "/auth/password/reset",
+        {
+          data: {
+            email: email,
+            newPassword: data.newPassword,
+          },
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      )
 
-      await resetPassword({
-        email: email,
-        newPassword: data.newPassword,
+      if ((await response).status !== 200) {
+        throw new Error("Erro ao alterar senha")
+      }
+
+      Toast.show({
+        type: "success",
+        text1: "Senha alterada!",
+        text2: "Sua senha foi redefinida com sucesso.",
+        visibilityTime: 4000,
       })
 
       router.replace("/(auth)/Signin")
     } catch (error: any) {
-      // O erro já é tratado dentro de resetPassword
-      console.error("Erro ao redefinir senha:", error)
+      Toast.show({
+        type: "error",
+        text1: "Erro ao alterar senha",
+        text2:
+          error.response?.data?.message ||
+          "Não foi possível alterar a senha. Tente novamente.",
+        visibilityTime: 4000,
+      })
     } finally {
       setLoading(false)
     }
@@ -123,19 +149,15 @@ export default function ConfirmNewPassword() {
                       <View style={styles.sectionIconContainer}>
                         <Text style={styles.sectionIcon}>🔒</Text>
                       </View>
-                      <Text style={styles.sectionTitle}>Defina sua nova senha</Text>
+                      <Text style={styles.sectionTitle}>
+                        Defina sua nova senha
+                      </Text>
                     </View>
 
                     <Text style={styles.descriptionText}>
-                      Digite uma nova senha segura para sua conta. A senha deve ter no mínimo 6 caracteres.
+                      Digite uma nova senha segura para sua conta. A senha deve
+                      ter no mínimo 6 caracteres.
                     </Text>
-
-                    {email && (
-                      <View style={styles.emailInfoContainer}>
-                        <Text style={styles.emailLabel}>Redefinindo senha para:</Text>
-                        <Text style={styles.emailText}>{email}</Text>
-                      </View>
-                    )}
 
                     <Input
                       control={control}
