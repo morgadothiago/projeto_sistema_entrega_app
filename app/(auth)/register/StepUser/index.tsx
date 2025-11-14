@@ -58,10 +58,7 @@ export default function UserInfo() {
   function onSubmit(data: any) {
     setLoading(true)
     setUserInfo(data)
-
-    setTimeout(() => {
-      router.push("/(auth)/register/StepAddress")
-    }, 1200)
+    router.push("/(auth)/register/StepAddress")
   }
 
   return (

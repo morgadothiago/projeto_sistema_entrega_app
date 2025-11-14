@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useMemo, useCallback } from "react"
 import {
   FlatList,
   Modal,
@@ -36,7 +36,7 @@ export default function Payments() {
   const [data, setData] = useState(null)
   const [transactions, setTransactions] = useState(cashFlowData)
 
-  const handleConfirmPayment = (paymentData: any) => {
+  const handleConfirmPayment = useCallback((paymentData: any) => {
     // Salva o valor do saque
     setWithdrawValue(paymentData?.value || "R$ 0,00")
 
@@ -55,18 +55,40 @@ export default function Payments() {
 
       // Aqui você pode adicionar a chamada à API ou outra lógica necessária
     }, 2000)
-  }
+  }, [])
 
-  const handleSuccessFinish = () => {
+  const handleSuccessFinish = useCallback(() => {
     setShowSuccess(false)
-  }
+  }, [])
 
-  const filteredCashFlowData = transactions.filter((item) => {
-    if (selectedFilter === "all") {
-      return true
-    }
-    return item.tipo === selectedFilter
-  })
+  const filteredCashFlowData = useMemo(() => {
+    return transactions.filter((item) => {
+      if (selectedFilter === "all") {
+        return true
+      }
+      return item.tipo === selectedFilter
+    })
+  }, [transactions, selectedFilter])
+
+  const renderPaymentItem = useCallback(({ item }: any) => (
+    <ListItemPayments
+      item={{
+        id: item.id,
+        type: item.tipo as "entrada" | "saida",
+        value: item.valor,
+        description: item.descricao,
+        date: item.data,
+      }}
+    />
+  ), [])
+
+  const keyExtractor = useCallback((item: any) => item.id, [])
+
+  const ItemSeparator = useCallback(() => <View style={styles.separator} />, [])
+
+  const ListEmpty = useCallback(() => (
+    <Text style={styles.emptyText}>Nenhuma transação encontrada.</Text>
+  ), [])
 
   // Mostra loading de processamento
   if (isLoading) {
@@ -176,25 +198,15 @@ export default function Payments() {
           <View style={styles.listContainer}>
             <FlatList
               data={filteredCashFlowData}
-              keyExtractor={(item) => item.id}
+              keyExtractor={keyExtractor}
               showsVerticalScrollIndicator={false}
-              ItemSeparatorComponent={() => <View style={styles.separator} />}
-              renderItem={({ item }) => (
-                <ListItemPayments
-                  item={{
-                    id: item.id,
-                    type: item.tipo as "entrada" | "saida",
-                    value: item.valor,
-                    description: item.descricao,
-                    date: item.data,
-                  }}
-                />
-              )}
-              ListEmptyComponent={
-                <Text style={styles.emptyText}>
-                  Nenhuma transação encontrada.
-                </Text>
-              }
+              ItemSeparatorComponent={ItemSeparator}
+              renderItem={renderPaymentItem}
+              ListEmptyComponent={ListEmpty}
+              removeClippedSubviews={true}
+              maxToRenderPerBatch={8}
+              updateCellsBatchingPeriod={50}
+              windowSize={5}
             />
           </View>
         </View>

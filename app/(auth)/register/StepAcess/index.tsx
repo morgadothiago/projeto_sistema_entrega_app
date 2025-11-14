@@ -81,9 +81,7 @@ export default function AccessStep() {
             visibilityTime: 3000,
           })
 
-          setTimeout(() => {
-            router.replace("/(auth)/Signin")
-          }, 2000)
+          router.replace("/(auth)/Signin")
         })
         .catch((err) => {
           Toast.show({

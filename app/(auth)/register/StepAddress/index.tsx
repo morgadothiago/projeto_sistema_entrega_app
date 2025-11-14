@@ -113,9 +113,7 @@ export default function AddressInfo() {
   function onSubmit(data: any) {
     setLoading(true)
     setUserInfo(data)
-    setTimeout(() => {
-      router.push("/(auth)/register/StepVehicles")
-    }, 1200)
+    router.push("/(auth)/register/StepVehicles")
   }
 
   return (

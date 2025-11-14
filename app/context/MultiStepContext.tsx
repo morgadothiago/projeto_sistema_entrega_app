@@ -1,5 +1,5 @@
 import { RegisterFormData } from "@/app/types/UserData"
-import React, { createContext, useContext, useState } from "react"
+import React, { createContext, useContext, useState, useMemo, useCallback } from "react"
 
 interface MultiStepContextProps {
   step: number
@@ -34,21 +34,21 @@ export const MultiStepProvider: React.FC<{ children: React.ReactNode }> = ({
   const [step, setStep] = useState(0)
   const [userInfo, setUserInfo] = useState<RegisterFormData>(defaultUserInfo)
 
-  function reset() {
+  const reset = useCallback(() => {
     setStep(0)
     setUserInfo(defaultUserInfo)
-  }
+  }, [])
+
+  const contextValue = useMemo(() => ({
+    step,
+    setStep,
+    userInfo,
+    setUserInfo,
+    reset,
+  }), [step, userInfo, reset])
 
   return (
-    <MultiStepContext.Provider
-      value={{
-        step,
-        setStep,
-        userInfo,
-        setUserInfo,
-        reset,
-      }}
-    >
+    <MultiStepContext.Provider value={contextValue}>
       {children}
     </MultiStepContext.Provider>
   )

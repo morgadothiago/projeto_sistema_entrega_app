@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import Axios, { AxiosResponse } from "axios"
 import Toast from "react-native-toast-message"
 import { ApiResponse } from "../types/ApiResponse"
+import Constants from "expo-constants"
 
 interface LoginData {
   email: string
@@ -14,14 +15,26 @@ interface LoginResponse {
   user: ApiResponse
 }
 
+// -------------------- CONFIGURAÇÃO DA API --------------------
+const API_URL = Constants.expoConfig?.extra?.apiUrl || "http://localhost:3000"
+const API_TIMEOUT = Number(Constants.expoConfig?.extra?.apiTimeout) || 10000
+
 // -------------------- INSTÂNCIA AXIOS --------------------
 const api = Axios.create({
-  baseURL: "http://192.168.100.95:3000",
+  baseURL: API_URL,
+  timeout: API_TIMEOUT,
   headers: {
     "Content-Type": "application/json",
     "User-Agent": "IEMobile",
   },
 })
+
+// Log da configuração (apenas em desenvolvimento)
+if (__DEV__) {
+  console.log("📡 API Configuration:")
+  console.log("  - Base URL:", API_URL)
+  console.log("  - Timeout:", API_TIMEOUT, "ms")
+}
 
 // -------------------- LOGIN --------------------
 export async function login(data: LoginData): Promise<LoginResponse> {
@@ -151,6 +164,29 @@ export async function newAccount(data: any) {
       error.response?.data?.message ||
         "Erro ao criar nova conta. Verifique os dados enviados."
     )
+  }
+}
+
+// -------------------- REDEFINIÇÃO DE SENHA --------------------
+export async function resetPassword(data: { email: string; newPassword: string }) {
+  try {
+    const response = await api.post("/auth/password/reset", data)
+
+    Toast.show({
+      type: "success",
+      text1: "Senha redefinida!",
+      text2: "Sua senha foi alterada com sucesso.",
+    })
+
+    return response.data
+  } catch (error: any) {
+    Toast.show({
+      type: "error",
+      text1: "Erro ao redefinir senha",
+      text2: error.response?.data?.message || "Não foi possível alterar a senha. Tente novamente.",
+    })
+
+    throw error
   }
 }
 

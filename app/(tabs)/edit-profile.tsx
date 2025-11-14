@@ -158,9 +158,7 @@ export default function EditProfile() {
         text2: "Perfil atualizado com sucesso",
       })
 
-      setTimeout(() => {
-        router.push("/(tabs)/profile")
-      }, 1500)
+      router.push("/(tabs)/profile")
     } catch (error) {
       Toast.show({
         type: "error",

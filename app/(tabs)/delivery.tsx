@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router"
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useCallback } from "react"
 import { FlatList, StyleSheet, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { DeliveryItem } from "../components/DeliveryItem"
@@ -37,12 +37,24 @@ export default function Delivery() {
     }
   }
 
-  const handleOpenDetails = (order: ApiOrder) => {
+  const handleOpenDetails = useCallback((order: ApiOrder) => {
     router.push({
       pathname: "/deliveryDetails",
       params: { code: order.code },
     })
-  }
+  }, [router])
+
+  const renderDeliveryItem = useCallback(({ item }: { item: ApiOrder }) => (
+    <DeliveryItem item={item} onPress={handleOpenDetails} />
+  ), [handleOpenDetails])
+
+  const keyExtractor = useCallback((item: ApiOrder) => item.code, [])
+
+  const ListEmptyComponent = useCallback(() => (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyText}>Nenhuma entrega disponível</Text>
+    </View>
+  ), [])
 
   return (
     <SafeAreaView style={styles.container}>
@@ -51,16 +63,14 @@ export default function Delivery() {
       <View style={styles.listContainer}>
         <FlatList
           data={orders}
-          keyExtractor={(item) => item.code}
-          renderItem={({ item }) => (
-            <DeliveryItem item={item} onPress={() => handleOpenDetails(item)} />
-          )}
+          keyExtractor={keyExtractor}
+          renderItem={renderDeliveryItem}
           contentContainerStyle={styles.listContent}
-          ListEmptyComponent={() => (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>Nenhuma entrega disponível</Text>
-            </View>
-          )}
+          ListEmptyComponent={ListEmptyComponent}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={50}
+          windowSize={5}
         />
       </View>
     </SafeAreaView>

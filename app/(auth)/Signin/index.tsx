@@ -94,8 +94,6 @@ export default function LoginScreen() {
         text2: "Você fez login corretamente",
       })
 
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
       setLoading(false)
       router.push("/(tabs)/home")
     } catch (error: any) {
@@ -105,7 +103,6 @@ export default function LoginScreen() {
         text2: error.response?.data?.message || "Tente novamente.",
       })
 
-      await new Promise((resolve) => setTimeout(resolve, 2000))
       setLoading(false)
     }
   })

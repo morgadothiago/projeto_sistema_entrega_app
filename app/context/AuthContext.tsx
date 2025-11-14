@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import React, { createContext, useContext, useEffect, useState } from "react"
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react"
 import { api, login } from "../service/api"
 import { ApiResponse } from "../types/ApiResponse"
 
@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   // 🔹 Login
-  async function signIn(email: string, password: string) {
+  const signIn = useCallback(async (email: string, password: string) => {
     try {
       const { token: responseToken, user: userData } = await login({
         email,
@@ -75,10 +75,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       throw error
     }
-  }
+  }, [])
 
   // 🔹 Logout
-  async function signOut() {
+  const signOut = useCallback(async () => {
     try {
       setUser(null)
       setToken(null)
@@ -87,10 +87,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       delete api.defaults.headers.common["Authorization"]
     } catch (error) {
     }
-  }
+  }, [])
+
+  const contextValue = useMemo(() => ({
+    user,
+    token,
+    loading,
+    signIn,
+    signOut,
+  }), [user, token, loading, signIn, signOut])
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, signIn, signOut }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   )

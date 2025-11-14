@@ -51,11 +51,19 @@ export default function Home() {
   }, [token])
 
   useEffect(() => {
+    let isMounted = true
+    const abortController = new AbortController()
+
     async function LoadAndCheckInfo() {
       setIsLoading(true)
       try {
-        const response = await api.get(`/users/${user?.id}`)
+        const response = await api.get(`/users/${user?.id}`, {
+          signal: abortController.signal
+        })
         const data = response.data
+
+        if (!isMounted) return
+
         setDeliveryManData(data)
 
         console.log("📋 Dados do usuário:", JSON.stringify(data, null, 2))
@@ -90,16 +98,24 @@ export default function Home() {
           console.log(
             "⚠️  Cadastro incompleto, redirecionando para LoadingDocuments"
           )
-          router.replace("/(auth)/LoadingDocuments")
+          if (isMounted) {
+            router.replace("/(auth)/LoadingDocuments")
+          }
           return
         }
 
         console.log("✅ Cadastro completo, acesso liberado à aplicação")
-      } catch (error) {
+      } catch (error: any) {
+        if (error.name === 'CanceledError') return
+
         console.log("❌ Erro ao carregar dados:", error)
-        router.replace("/(auth)/Signin")
+        if (isMounted) {
+          router.replace("/(auth)/Signin")
+        }
       } finally {
-        setIsLoading(false)
+        if (isMounted) {
+          setIsLoading(false)
+        }
       }
     }
 
@@ -108,7 +124,12 @@ export default function Home() {
     } else {
       setIsLoading(false)
     }
-  }, [user?.id, router, token])
+
+    return () => {
+      isMounted = false
+      abortController.abort()
+    }
+  }, [user?.id])
 
   if (isLoading || !deliveryManData) {
     return (

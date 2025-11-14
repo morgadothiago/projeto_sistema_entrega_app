@@ -52,6 +52,27 @@ export const styles = StyleSheet.create({
     lineHeight: 20,
     opacity: 0.9,
   },
+  emailInfoContainer: {
+    backgroundColor: "rgba(0, 255, 179, 0.1)",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "rgba(0, 255, 179, 0.3)",
+  },
+  emailLabel: {
+    fontSize: 12,
+    color: colors.secondary,
+    marginBottom: 4,
+    opacity: 0.8,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  emailText: {
+    fontSize: 16,
+    color: colors.buttons,
+    fontWeight: "600",
+  },
   buttonContainer: {
     paddingHorizontal: 20,
     paddingVertical: 16,

@@ -62,7 +62,9 @@ export default function Profile() {
   const pickFromGallery = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
+      quality: 0.7,
+      allowsEditing: true,
+      aspect: [1, 1],
     })
     if (!result.canceled) {
       setProfileImage(result.assets[0].uri)
@@ -73,7 +75,9 @@ export default function Profile() {
   const takePhoto = async () => {
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
+      quality: 0.7,
+      allowsEditing: true,
+      aspect: [1, 1],
     })
     if (!result.canceled) {
       setProfileImage(result.assets[0].uri)

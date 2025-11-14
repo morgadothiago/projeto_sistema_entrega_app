@@ -99,7 +99,8 @@ export default function Documents() {
   const pickFromGallery = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
+      quality: 0.8,
+      allowsEditing: true,
     })
     if (!result.canceled) {
       setValue("documentImageUri", result.assets[0].uri)
@@ -108,8 +109,9 @@ export default function Documents() {
 
   const takePhoto = async () => {
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ["images"],
-      quality: 1,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+      allowsEditing: true,
     })
     if (!result.canceled) {
       setValue("documentImageUri", result.assets[0].uri)
