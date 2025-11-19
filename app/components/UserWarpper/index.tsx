@@ -1,12 +1,13 @@
+import { colors } from "@/app/theme"
+import { ApiResponse } from "@/app/types/ApiResponse"
 import React from "react"
 import {
   Image,
-  Text,
-  View,
   ImageSourcePropType,
   StyleSheet,
+  Text,
+  View,
 } from "react-native"
-import { ApiResponse } from "@/app/types/ApiResponse"
 
 interface UserWarpperProps {
   deliveryMan: ApiResponse["DeliveryMan"]
@@ -20,7 +21,10 @@ export default function UserWarpper({
   return (
     <View style={styles.container}>
       <View style={styles.avatarContainer}>
-        <Image source={avatarSource} style={styles.avatar} />
+        <Image
+          source={avatarSource || require("@/app/assets/logo_marca.png")}
+          style={styles.avatar}
+        />
       </View>
       <View style={styles.nameContainer}>
         <Text style={styles.userName}>{deliveryMan?.name || "Usuário"}</Text>
@@ -35,7 +39,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 10,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: colors.primary,
     borderRadius: 10,
     marginVertical: 10,
   },
@@ -45,7 +49,8 @@ const styles = StyleSheet.create({
   avatar: {
     width: 70,
     height: 70,
-    borderRadius: 35,
+    borderRadius: 20,
+    backgroundColor: colors.active,
   },
   nameContainer: {
     flexDirection: "row",
@@ -57,5 +62,6 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 18,
     fontWeight: "bold",
+    color: colors.buttons,
   },
 })

@@ -16,12 +16,15 @@ interface LoginResponse {
 }
 
 // -------------------- CONFIGURAÇÃO DA API --------------------
-const API_URL = Constants.expoConfig?.extra?.apiUrl || "http://localhost:3000"
+const API_URL =
+  Constants.expoConfig?.extra?.apiUrl ||
+  "http://192.168.100.99:3000" ||
+  "http://localhost:3000"
 const API_TIMEOUT = Number(Constants.expoConfig?.extra?.apiTimeout) || 10000
 
 // -------------------- INSTÂNCIA AXIOS --------------------
 const api = Axios.create({
-  baseURL: API_URL,
+  baseURL: "http://192.168.100.99:3000",
   timeout: API_TIMEOUT,
   headers: {
     "Content-Type": "application/json",
@@ -168,7 +171,10 @@ export async function newAccount(data: any) {
 }
 
 // -------------------- REDEFINIÇÃO DE SENHA --------------------
-export async function resetPassword(data: { email: string; newPassword: string }) {
+export async function resetPassword(data: {
+  email: string
+  newPassword: string
+}) {
   try {
     const response = await api.post("/auth/password/reset", data)
 
@@ -183,7 +189,9 @@ export async function resetPassword(data: { email: string; newPassword: string }
     Toast.show({
       type: "error",
       text1: "Erro ao redefinir senha",
-      text2: error.response?.data?.message || "Não foi possível alterar a senha. Tente novamente.",
+      text2:
+        error.response?.data?.message ||
+        "Não foi possível alterar a senha. Tente novamente.",
     })
 
     throw error

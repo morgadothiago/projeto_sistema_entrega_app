@@ -105,4 +105,9 @@ export type DeliveryItem = {
   date: string;
   status: "pending" | "in_progress" | "completed";
   day: string;
+  // Campos opcionais da API
+  code?: string;
+  customerName?: string;
+  address?: string;
+  value?: number;
 };
