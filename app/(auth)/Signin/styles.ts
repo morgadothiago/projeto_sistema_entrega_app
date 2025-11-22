@@ -1,5 +1,12 @@
 import { Platform, StyleSheet } from "react-native"
 import { colors } from "../../theme"
+import {
+  spacing,
+  fontSize,
+  borderRadius,
+  isSmallScreen,
+  responsiveSize,
+} from "../../utils/responsive"
 
 const styles = StyleSheet.create({
   container: {
@@ -13,31 +20,31 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing.xl,
   },
   logoContainer: {
-    marginBottom: 20,
+    marginBottom: spacing.lg,
     alignItems: "center",
     justifyContent: "center",
   },
   logo: {
-    width: 160,
-    height: 160,
+    width: responsiveSize(160, 120),
+    height: responsiveSize(160, 120),
     resizeMode: "contain",
   },
   welcomeTitle: {
-    fontSize: 28,
+    fontSize: responsiveSize(28, 24),
     fontWeight: "bold",
     color: colors.secondary,
     textAlign: "center",
-    marginBottom: 8,
+    marginBottom: spacing.sm,
     letterSpacing: 0.5,
   },
   welcomeSubtitle: {
-    fontSize: 16,
+    fontSize: fontSize.base,
     color: colors.secondary,
     textAlign: "center",
-    marginBottom: 32,
+    marginBottom: spacing.xxl,
     opacity: 0.9,
   },
   form: {
@@ -47,11 +54,11 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     width: "100%",
-    marginBottom: 16,
+    marginBottom: spacing.lg,
     backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     ...Platform.select({
       ios: {
         shadowColor: colors.buttons,
@@ -69,10 +76,10 @@ const styles = StyleSheet.create({
   },
   button: {
     width: "100%",
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: borderRadius.lg,
+    paddingVertical: spacing.lg,
     backgroundColor: colors.buttons,
-    marginTop: 12,
+    marginTop: spacing.md,
     ...Platform.select({
       ios: {
         shadowColor: colors.buttons,
@@ -93,9 +100,9 @@ const styles = StyleSheet.create({
   },
   footer: {
     position: "absolute",
-    bottom: 40,
-    left: 24,
-    right: 24,
+    bottom: responsiveSize(40, 24),
+    left: spacing.xl,
+    right: spacing.xl,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -103,12 +110,12 @@ const styles = StyleSheet.create({
   linkButton: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
   },
   linkText: {
     color: colors.secondary,
-    fontSize: 16,
+    fontSize: fontSize.base,
     fontWeight: "600",
   },
   loadingOverlay: {
@@ -119,12 +126,12 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   lottieAnimation: {
-    width: 200,
-    height: 200,
+    width: responsiveSize(200, 150),
+    height: responsiveSize(200, 150),
   },
   loadingText: {
-    marginTop: 16,
-    fontSize: 18,
+    marginTop: spacing.lg,
+    fontSize: fontSize.lg,
     fontWeight: "600",
     color: colors.buttons,
     letterSpacing: 0.5,

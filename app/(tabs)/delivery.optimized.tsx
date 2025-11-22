@@ -10,7 +10,7 @@ import {
   ScrollView,
   Linking,
   Modal,
-  Dimensions,
+  ActivityIndicator,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import Toast from "react-native-toast-message"
@@ -22,10 +22,6 @@ import { colors } from "../theme"
 import { ApiOrder } from "../types/order"
 import { logger } from "../utils/logger"
 import { ERROR_MESSAGES, FLATLIST_CONFIG } from "../utils/constants"
-import DeliveryCompletionCapture from "../components/DeliveryCompletionCapture"
-
-const { height: SCREEN_HEIGHT } = Dimensions.get("window")
-const isSmallScreen = SCREEN_HEIGHT < 700
 
 // ✅ OTIMIZAÇÃO 1: Constantes movidas para fora do componente
 const STATUS_COLORS = {
@@ -70,7 +66,6 @@ export default function Delivery() {
   const [orders, setOrders] = useState<ApiOrder[]>([])
   const [refreshing, setRefreshing] = useState(false)
   const [showCompleteModal, setShowCompleteModal] = useState(false)
-  const [showCaptureScreen, setShowCaptureScreen] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState<ApiOrder | null>(null)
   const [isCompleting, setIsCompleting] = useState(false)
 
@@ -243,29 +238,12 @@ export default function Delivery() {
     setSelectedOrder(null)
   }, [])
 
-  // Abrir tela de captura de foto
-  const handleConfirmCompletion = useCallback(() => {
-    setShowCompleteModal(false)
-    setShowCaptureScreen(true)
-  }, [])
-
-  // Cancelar captura e voltar
-  const handleCancelCapture = useCallback(() => {
-    setShowCaptureScreen(false)
-    setSelectedOrder(null)
-  }, [])
-
   // ✅ OTIMIZAÇÃO 10: Corrigir endpoint e payload
-  const handleCompleteDelivery = useCallback(
-    async (captureData: {
-      photo: string
-      customerName: string
-      trackingCode: string
-    }) => {
-      if (!token || !selectedOrder) return
+  const handleCompleteDelivery = useCallback(async () => {
+    if (!token || !selectedOrder) return
 
-      try {
-        setIsCompleting(true)
+    try {
+      setIsCompleting(true)
         logger.info("Finalizando entrega", {
           context: "Delivery",
           data: {
@@ -300,44 +278,36 @@ export default function Delivery() {
           })
         }
 
-        // Payload correto para o backend com dados de captura
+        // Payload correto para o backend
         const payload = {
           status: "completed",
           latitude,
           longitude,
-          notes: `Entrega finalizada - Recebido por: ${captureData.customerName}`,
-          photo: captureData.photo,
-          customerName: captureData.customerName,
-          trackingCode: captureData.trackingCode,
+          notes: "Entrega finalizada com sucesso",
         }
 
         logger.info("Enviando requisição", {
           context: "Delivery",
           data: {
             endpoint: `/delivery/${selectedOrder.id}/status`,
-            payload: { ...payload, photo: "[base64]" }, // Não logar a foto completa
-            hasToken: !!token,
+            payload,
+            hasToken: !!token
           },
         })
 
-        const response = await api.patch(
-          `/delivery/${selectedOrder.id}/status`,
-          payload,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
+        const response = await api.patch(`/delivery/${selectedOrder.id}/status`, payload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
 
         logger.info("Resposta recebida", {
           context: "Delivery",
           data: response.data,
         })
 
-        // Fechar tela de captura
-        setShowCaptureScreen(false)
-        setSelectedOrder(null)
+        // Fechar modal antes de mostrar toast
+        closeCompleteModal()
 
         Toast.show({
           type: "success",
@@ -389,7 +359,7 @@ export default function Delivery() {
         setIsCompleting(false)
       }
     },
-    [token, selectedOrder, getAllDeliverys]
+    [token, selectedOrder, getAllDeliverys, closeCompleteModal]
   )
 
   const keyExtractor = useCallback((item: ApiOrder) => item.code, [])
@@ -629,30 +599,19 @@ export default function Delivery() {
 
                 <TouchableOpacity
                   style={[styles.modalButton, styles.modalButtonConfirm]}
-                  onPress={handleConfirmCompletion}
+                  onPress={handleCompleteDelivery}
                   disabled={isCompleting}
                 >
-                  <Text style={styles.modalButtonTextConfirm}>Confirmar</Text>
+                  {isCompleting ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <Text style={styles.modalButtonTextConfirm}>Confirmar</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         </Modal>
-
-        {/* Tela de Captura de Foto */}
-        {showCaptureScreen && selectedOrder && (
-          <Modal
-            visible={showCaptureScreen}
-            animationType="slide"
-            onRequestClose={handleCancelCapture}
-          >
-            <DeliveryCompletionCapture
-              deliveryCode={selectedOrder.code}
-              onComplete={handleCompleteDelivery}
-              onCancel={handleCancelCapture}
-            />
-          </Modal>
-        )}
       </SafeAreaView>
     )
   }
@@ -1018,9 +977,9 @@ const styles = StyleSheet.create({
   },
   deliveryCard: {
     backgroundColor: "#fff",
-    borderRadius: isSmallScreen ? 12 : 16,
-    padding: isSmallScreen ? 12 : 16,
-    marginBottom: isSmallScreen ? 10 : 12,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -1031,50 +990,50 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: isSmallScreen ? 10 : 12,
-    paddingBottom: isSmallScreen ? 10 : 12,
+    marginBottom: 12,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#f3f4f6",
   },
   deliveryCode: {
-    fontSize: isSmallScreen ? 14 : 16,
+    fontSize: 16,
     fontWeight: "bold",
     color: colors.text,
   },
   deliveryStatusBadge: {
-    paddingHorizontal: isSmallScreen ? 8 : 10,
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
   },
   deliveryStatusText: {
-    fontSize: isSmallScreen ? 10 : 11,
+    fontSize: 11,
     fontWeight: "600",
     color: "#fff",
     textTransform: "uppercase",
   },
   deliveryInfo: {
-    marginBottom: isSmallScreen ? 6 : 8,
+    marginBottom: 8,
   },
   deliveryLabel: {
-    fontSize: isSmallScreen ? 11 : 12,
+    fontSize: 12,
     color: colors.text,
     opacity: 0.6,
     marginBottom: 2,
   },
   deliveryValue: {
-    fontSize: isSmallScreen ? 13 : 14,
+    fontSize: 14,
     color: colors.text,
     fontWeight: "500",
   },
   acceptButton: {
     backgroundColor: colors.buttons,
-    borderRadius: isSmallScreen ? 10 : 12,
-    padding: isSmallScreen ? 12 : 14,
+    borderRadius: 12,
+    padding: 14,
     alignItems: "center",
-    marginTop: isSmallScreen ? 10 : 12,
+    marginTop: 12,
   },
   acceptButtonText: {
-    fontSize: isSmallScreen ? 13 : 15,
+    fontSize: 15,
     fontWeight: "700",
     color: "#fff",
     textTransform: "uppercase",
@@ -1087,47 +1046,47 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: "#fff",
-    borderTopLeftRadius: isSmallScreen ? 20 : 24,
-    borderTopRightRadius: isSmallScreen ? 20 : 24,
-    padding: isSmallScreen ? 16 : 24,
-    paddingBottom: isSmallScreen ? 32 : 40,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
   },
   modalTitle: {
-    fontSize: isSmallScreen ? 20 : 24,
+    fontSize: 24,
     fontWeight: "bold",
     color: colors.text,
-    marginBottom: isSmallScreen ? 12 : 16,
+    marginBottom: 16,
     textAlign: "center",
   },
   modalText: {
-    fontSize: isSmallScreen ? 14 : 16,
+    fontSize: 16,
     color: colors.text,
-    marginBottom: isSmallScreen ? 6 : 8,
+    marginBottom: 8,
     textAlign: "center",
-    lineHeight: isSmallScreen ? 20 : 24,
+    lineHeight: 24,
   },
   modalTextBold: {
     fontWeight: "bold",
     color: colors.buttons,
   },
   modalSubtext: {
-    fontSize: isSmallScreen ? 12 : 14,
+    fontSize: 14,
     color: colors.text,
     opacity: 0.6,
-    marginBottom: isSmallScreen ? 20 : 24,
+    marginBottom: 24,
     textAlign: "center",
   },
   modalButtons: {
     flexDirection: "row",
-    gap: isSmallScreen ? 10 : 12,
+    gap: 12,
   },
   modalButton: {
     flex: 1,
-    borderRadius: isSmallScreen ? 10 : 12,
-    padding: isSmallScreen ? 14 : 16,
+    borderRadius: 12,
+    padding: 16,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: isSmallScreen ? 48 : 52,
+    minHeight: 52,
   },
   modalButtonCancel: {
     backgroundColor: "#f3f4f6",
@@ -1136,12 +1095,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#10b981",
   },
   modalButtonTextCancel: {
-    fontSize: isSmallScreen ? 14 : 16,
+    fontSize: 16,
     fontWeight: "700",
     color: colors.text,
   },
   modalButtonTextConfirm: {
-    fontSize: isSmallScreen ? 14 : 16,
+    fontSize: 16,
     fontWeight: "700",
     color: "#fff",
   },

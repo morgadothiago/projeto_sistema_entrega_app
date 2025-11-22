@@ -13,6 +13,7 @@ export interface ClientAddress {
 }
 
 export interface ApiOrder {
+  id: number
   Company: Company
   code: string
   completedAt: string | null
