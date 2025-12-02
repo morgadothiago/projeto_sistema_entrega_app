@@ -262,7 +262,11 @@ export default function Home() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header title="Home" tabs={false} />
+      <Header
+        title="Home"
+        tabs={false}
+        onNotificationPress={() => router.push("/settings/notifications")}
+      />
       <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}

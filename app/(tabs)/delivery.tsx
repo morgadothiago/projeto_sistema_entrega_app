@@ -1,28 +1,28 @@
+import * as Location from "expo-location"
 import { useRouter } from "expo-router"
-import React, { useEffect, useState, useCallback, useMemo, useRef } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
+  Dimensions,
   FlatList,
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  RefreshControl,
-  ScrollView,
   Linking,
   Modal,
-  Dimensions,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import Toast from "react-native-toast-message"
-import * as Location from "expo-location"
+import DeliveryCompletionCapture from "../components/DeliveryCompletionCapture"
 import { Header } from "../components/Header"
 import { useAuth } from "../context/AuthContext"
 import { api } from "../service/api"
 import { colors } from "../theme"
 import { ApiOrder } from "../types/order"
-import { logger } from "../utils/logger"
 import { ERROR_MESSAGES, FLATLIST_CONFIG } from "../utils/constants"
-import DeliveryCompletionCapture from "../components/DeliveryCompletionCapture"
+import { logger } from "../utils/logger"
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window")
 const isSmallScreen = SCREEN_HEIGHT < 700
@@ -376,9 +376,9 @@ export default function Delivery() {
         const errorMessage =
           error?.response?.status === 403
             ? error?.response?.data?.message ||
-              "Esta entrega não está atribuída a você."
+            "Esta entrega não está atribuída a você."
             : error?.response?.data?.message ||
-              "Não foi possível concluir a entrega. Tente novamente."
+            "Não foi possível concluir a entrega. Tente novamente."
 
         Toast.show({
           type: "error",
@@ -398,7 +398,7 @@ export default function Delivery() {
   const renderDeliveryItem = useCallback(
     ({ item }: { item: ApiOrder }) => (
       <View style={styles.deliveryCard}>
-        <View style={styles.deliveryHeader}>
+        <View style={styles.deliveryHeader} >
           <Text style={styles.deliveryCode}>{item.code}</Text>
           <View
             style={[
@@ -448,7 +448,7 @@ export default function Delivery() {
   if (activeDelivery) {
     return (
       <SafeAreaView style={styles.container}>
-        <Header title="Entrega em Andamento" />
+        <Header title="Entrega em Andamento" onNotificationPress={() => { }} />
 
         <ScrollView
           style={styles.content}

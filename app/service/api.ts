@@ -1,9 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import Axios, { AxiosResponse } from "axios"
-import Toast from "react-native-toast-message"
-import { ApiResponse } from "../types/ApiResponse"
 import Constants from "expo-constants"
 import { Platform } from "react-native"
+import Toast from "react-native-toast-message"
+import { ApiResponse } from "../types/ApiResponse"
 
 interface LoginData {
   email: string
@@ -73,7 +73,7 @@ console.log("🔧 Is Device:", Constants.isDevice)
 
 // -------------------- INSTÂNCIA AXIOS --------------------
 const api = Axios.create({
-  baseURL: "http://192.168.15.15:3000",
+  baseURL: "http://localhost:3000",
   // baseURL: "http://localhost
   headers: {
     "Content-Type": "application/json",
@@ -208,8 +208,33 @@ export async function newAccount(data: any) {
 
     throw new Error(
       error.response?.data?.message ||
-        "Erro ao criar nova conta. Verifique os dados enviados."
+      "Erro ao criar nova conta. Verifique os dados enviados."
     )
+  }
+}
+
+// -------------------- ESQUECI A SENHA --------------------
+export async function forgotPassword(data: { email: string }) {
+  try {
+    const response = await api.post("/auth/password/forgot", data)
+
+    Toast.show({
+      type: "success",
+      text1: "Email enviado!",
+      text2: "Verifique sua caixa de entrada para redefinir sua senha.",
+    })
+
+    return response.data
+  } catch (error: any) {
+    Toast.show({
+      type: "error",
+      text1: "Erro ao enviar email",
+      text2:
+        error.response?.data?.message ||
+        "Não foi possível enviar o email. Tente novamente.",
+    })
+
+    throw error
   }
 }
 

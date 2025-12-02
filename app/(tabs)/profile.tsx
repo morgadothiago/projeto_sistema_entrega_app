@@ -1,64 +1,62 @@
 import fundoBg from "@/app/assets/funndo.png"
 import logo from "@/app/assets/logo.png"
+import { Feather } from "@expo/vector-icons"
 import { Image } from "expo-image"
 import * as ImagePicker from "expo-image-picker"
+import { useRouter } from "expo-router"
 import React, { useEffect, useState } from "react"
 import {
   Alert,
   Animated,
   ImageBackground,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { Button } from "../components/Button"
 import { Header } from "../components/Header"
 import { useAuth } from "../context/AuthContext"
 import { colors } from "../theme"
 
-type BankAccount = {
-  pixKey?: string
-  pixKeyType?: string
-  bankName?: string
-  agency?: string
-  account?: string
-  accountType?: string
-}
-
 export default function Profile() {
-  const { user, loading, signOut } = useAuth()
-  const [activeTab, setActiveTab] = useState("Usuario")
+  const { user, signOut } = useAuth()
+  const router = useRouter()
   const [profileImage, setProfileImage] = useState<string | null>(null)
-  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([])
   const fadeAnim = React.useRef(new Animated.Value(0)).current
+  const slideAnim = React.useRef(new Animated.Value(50)).current
 
-  // Animação de fade in
   useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: true,
-    }).start()
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start()
   }, [])
 
   // 🔹 Pedir permissão de câmera e galeria
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       const { status: mediaStatus } =
         await ImagePicker.requestMediaLibraryPermissionsAsync()
       const { status: cameraStatus } =
         await ImagePicker.requestCameraPermissionsAsync()
       if (mediaStatus !== "granted" || cameraStatus !== "granted") {
-        alert("Precisamos de permissão para acessar a câmera e galeria!")
+        // Alert.alert("Permissão necessária", "Precisamos de permissão para acessar a câmera e galeria!")
       }
     })()
-  }, [user, loading])
+  }, [])
 
-  // 🔹 Escolher da galeria
   const pickFromGallery = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -71,7 +69,6 @@ export default function Profile() {
     }
   }
 
-  // 🔹 Tirar foto com a câmera
   const takePhoto = async () => {
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -84,14 +81,56 @@ export default function Profile() {
     }
   }
 
-  // 🔹 Exibir alerta de escolha
   const chooseImageOption = () => {
-    Alert.alert("Selecionar Imagem", "Escolha uma opção:", [
+    Alert.alert("Alterar Foto", "Escolha uma opção:", [
       { text: "Tirar foto", onPress: takePhoto },
       { text: "Escolher da galeria", onPress: pickFromGallery },
       { text: "Cancelar", style: "cancel" },
     ])
   }
+
+  const handleLogout = () => {
+    Alert.alert("Sair", "Tem certeza que deseja sair da sua conta?", [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Sair", onPress: signOut, style: "destructive" },
+    ])
+  }
+
+  const renderMenuItem = (
+    icon: keyof typeof Feather.glyphMap,
+    title: string,
+    subtitle: string,
+    onPress: () => void,
+    isDestructive = false
+  ) => (
+    <TouchableOpacity
+      style={styles.menuItem}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <View
+        style={[
+          styles.menuIconContainer,
+          isDestructive && styles.menuIconContainerDestructive,
+        ]}
+      >
+        <Feather
+          name={icon}
+          size={22}
+          color={isDestructive ? "#FF453A" : colors.buttons}
+        />
+      </View>
+      <View style={styles.menuTextContainer}>
+        <Text
+          style={[styles.menuTitle, isDestructive && styles.menuTitleDestructive]}
+        >
+          {title}
+        </Text>
+        <Text style={styles.menuSubtitle}>{subtitle}</Text>
+      </View>
+      <Feather name="chevron-right" size={20} color={colors.secondary} />
+    </TouchableOpacity>
+  )
 
   return (
     <ImageBackground
@@ -101,37 +140,103 @@ export default function Profile() {
     >
       <View style={styles.overlay} />
       <SafeAreaView style={{ flex: 1 }}>
-        <Header title="Perfil" tabs={false} tabsTitle="Meu Perfil" />
+        <Header title="Meu Perfil" onNotificationPress={() => { }} />
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          <Animated.View style={{ opacity: fadeAnim }}>
-            <View style={styles.imageContainer}>
-              <Pressable onPress={chooseImageOption}>
+        <ScrollView
+          style={styles.content}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 40 }}
+        >
+          <Animated.View
+            style={{
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            }}
+          >
+            {/* Header do Perfil */}
+            <View style={styles.profileHeader}>
+              <TouchableOpacity
+                onPress={chooseImageOption}
+                style={styles.avatarContainer}
+              >
                 <Image
                   source={profileImage ? { uri: profileImage } : logo}
-                  style={{ width: 90, height: 90, borderRadius: 45 }}
+                  style={styles.avatar}
                 />
-              </Pressable>
-            </View>
-
-            <View style={styles.infoCard}>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>👤 Nome</Text>
-                <Text style={styles.infoValue}>{user?.DeliveryMan?.name}</Text>
+                <View style={styles.editIconBadge}>
+                  <Feather name="camera" size={14} color="#FFF" />
+                </View>
+              </TouchableOpacity>
+              <View style={styles.profileInfo}>
+                <Text style={styles.userName}>
+                  {user?.DeliveryMan?.name || "Entregador"}
+                </Text>
+                <Text style={styles.userEmail}>{user?.email}</Text>
+                <View style={styles.statusBadge}>
+                  <View style={styles.statusDot} />
+                  <Text style={styles.statusText}>Ativo</Text>
+                </View>
               </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>✉️ Email</Text>
-                <Text style={styles.infoValue}>{user?.email}</Text>
+            </View>
+
+            {/* Card de Veículo */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Meu Veículo</Text>
+              <View style={styles.vehicleCard}>
+                <View style={styles.vehicleIcon}>
+                  <Feather name="truck" size={24} color={colors.buttons} />
+                </View>
+                <View style={styles.vehicleDetails}>
+                  <Text style={styles.vehicleName}>
+                    {user?.DeliveryMan?.Vehicle?.brand || "Marca"}{" "}
+                    {user?.DeliveryMan?.Vehicle?.model || "Modelo"}
+                  </Text>
+                  <Text style={styles.vehiclePlate}>
+                    {user?.DeliveryMan?.Vehicle?.licensePlate || "SEM PLACA"}
+                  </Text>
+                </View>
+                <View style={styles.vehicleBadge}>
+                  <Text style={styles.vehicleBadgeText}>
+                    {user?.DeliveryMan?.Vehicle?.color || "Cor"}
+                  </Text>
+                </View>
               </View>
             </View>
 
-            <View>
-              <Text>Area De direcionamento para</Text>
+            {/* Menu de Ações */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Configurações</Text>
+              <View style={styles.menuContainer}>
+                {renderMenuItem(
+                  "user",
+                  "Dados Pessoais",
+                  "Editar nome, telefone e endereço",
+                  () => router.push("/settings/edit-profile")
+                )}
+                <View style={styles.separator} />
+                {renderMenuItem(
+                  "lock",
+                  "Segurança",
+                  "Alterar senha e privacidade",
+                  () => router.push("/settings/security")
+                )}
+              </View>
             </View>
 
-            <View>
-              <Button title="Sair" onPress={() => signOut()} />
+            {/* Botão Sair */}
+            <View style={[styles.sectionContainer, { marginTop: 10 }]}>
+              <View style={styles.menuContainer}>
+                {renderMenuItem(
+                  "log-out",
+                  "Sair da Conta",
+                  "Encerrar sessão atual",
+                  handleLogout,
+                  true
+                )}
+              </View>
             </View>
+
+            <Text style={styles.versionText}>Versão 1.0.0</Text>
           </Animated.View>
         </ScrollView>
       </SafeAreaView>
@@ -139,165 +244,189 @@ export default function Profile() {
   )
 }
 
-export const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 10,
   },
-  imageContainer: {
-    width: 120,
-    height: 120,
-    backgroundColor: colors.primary,
-    borderRadius: 60,
+  profileHeader: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 4,
+    marginBottom: 30,
+    marginTop: 10,
+  },
+  avatarContainer: {
+    position: "relative",
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
     borderColor: colors.buttons,
-    marginBottom: 16,
-    alignSelf: "center",
-    ...Platform.select({
-      ios: {
-        shadowColor: colors.buttons,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
   },
-  infoCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "rgba(0, 255, 179, 0.3)",
-  },
-  infoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: colors.secondary,
-    fontWeight: "600",
-  },
-  infoValue: {
-    fontSize: 14,
-    color: colors.buttons,
-    fontWeight: "bold",
-  },
-  tabInfoUser: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    width: "100%",
-    marginBottom: 20,
-    gap: 10,
-  },
-  tabButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(0, 255, 179, 0.2)",
-  },
-  tabText: {
-    color: colors.secondary,
-    fontSize: 14,
-    fontWeight: "bold",
-    textTransform: "capitalize",
-  },
-  activeTabButton: {
+  editIconBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
     backgroundColor: colors.buttons,
-    borderColor: colors.buttons,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#1A1A1A",
   },
-  activeTabText: {
-    color: colors.primary,
+  profileInfo: {
+    marginLeft: 16,
+    flex: 1,
   },
-  tabContent: {
-    width: "100%",
-    marginBottom: 20,
+  userName: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#FFF",
+    marginBottom: 4,
   },
-  section: {
-    marginBottom: 20,
+  userEmail: {
+    fontSize: 14,
+    color: colors.secondary,
+    marginBottom: 8,
   },
-  sectionHeader: {
+  statusBadge: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
-    paddingHorizontal: 8,
+    backgroundColor: "rgba(0, 255, 179, 0.15)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: "flex-start",
   },
-  sectionIcon: {
-    fontSize: 20,
-    marginRight: 12,
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.buttons,
+    marginRight: 6,
+  },
+  statusText: {
+    color: colors.buttons,
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  sectionContainer: {
+    marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: colors.buttons,
-    letterSpacing: 0.5,
-  },
-  inputContainer: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.secondary,
     marginBottom: 12,
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    ...Platform.select({
-      ios: {
-        shadowColor: colors.buttons,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+    marginLeft: 4,
+    textTransform: "uppercase",
+    letterSpacing: 1,
   },
-  accountCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    borderRadius: 12,
+  vehicleCard: {
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: "rgba(0, 255, 179, 0.2)",
+    borderColor: "rgba(255, 255, 255, 0.1)",
   },
-  accountTitle: {
+  vehicleIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(0, 255, 179, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+  },
+  vehicleDetails: {
+    flex: 1,
+  },
+  vehicleName: {
     fontSize: 16,
     fontWeight: "bold",
-    color: colors.buttons,
-    marginBottom: 12,
+    color: "#FFF",
+    marginBottom: 4,
   },
-  emptyText: {
-    textAlign: "center",
-    color: colors.secondary,
+  vehiclePlate: {
     fontSize: 14,
-    fontStyle: "italic",
-    paddingVertical: 20,
+    color: colors.secondary,
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+    letterSpacing: 1,
   },
-  buttonContainer: {
-    width: "100%",
+  vehicleBadge: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  vehicleBadgeText: {
+    color: "#FFF",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  menuContainer: {
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+  },
+  menuItem: {
     flexDirection: "row",
-
-    alignItems: "flex-start",
-
-    paddingBottom: 20,
-    marginTop: 10,
+    alignItems: "center",
+    padding: 16,
+  },
+  menuIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "rgba(0, 255, 179, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+  },
+  menuIconContainerDestructive: {
+    backgroundColor: "rgba(255, 69, 58, 0.1)",
+  },
+  menuTextContainer: {
+    flex: 1,
+  },
+  menuTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFF",
+    marginBottom: 2,
+  },
+  menuTitleDestructive: {
+    color: "#FF453A",
+  },
+  menuSubtitle: {
+    fontSize: 12,
+    color: colors.secondary,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    marginLeft: 68,
+  },
+  versionText: {
+    textAlign: "center",
+    color: "rgba(255, 255, 255, 0.3)",
+    fontSize: 12,
+    marginTop: 20,
+    marginBottom: 20,
   },
 })

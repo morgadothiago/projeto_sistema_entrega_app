@@ -2,13 +2,14 @@ import { toastConfig } from "@/toastConfig"
 import { Stack } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import React from "react"
-import Toast from "react-native-toast-message"
-import { AuthProvider, useAuth } from "./context/AuthContext"
 import { SafeAreaProvider } from "react-native-safe-area-context"
-import Loading from "./components/Loading"
+import Toast from "react-native-toast-message"
+import FundoLogo from "./assets/funndo.png"
 import LoadingAnimation from "./assets/Loading.json"
 import Logo from "./assets/logo.png"
-import FundoLogo from "./assets/funndo.png"
+import Loading from "./components/Loading"
+import { AuthProvider, useAuth } from "./context/AuthContext"
+import { NotificationProvider } from "./context/NotificationContext"
 
 function InitialLayout() {
   const { loading } = useAuth()
@@ -42,7 +43,9 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <InitialLayout />
+        <NotificationProvider>
+          <InitialLayout />
+        </NotificationProvider>
       </AuthProvider>
     </SafeAreaProvider>
   )

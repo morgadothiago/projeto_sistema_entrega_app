@@ -3,33 +3,32 @@
  * Versão melhorada com API real e layout correto
  */
 
-import React, { useState, useCallback, useEffect, useMemo } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 import {
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
   ScrollView,
   StyleSheet,
-  View,
   Text,
-  ActivityIndicator,
-  RefreshControl,
   TouchableOpacity,
-  FlatList,
+  View,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import Toast from "react-native-toast-message"
-import { Header } from "../components/Header"
-import { colors } from "../theme"
-import AppPicker from "../components/Select"
 import DeliveryCard from "../components/DeliveryCard"
-import { DeliveryItem, deliveriesData } from "../mocks/deliveriesData"
-import { logger } from "../utils/logger"
-import { ERROR_MESSAGES } from "../utils/constants"
+import { Header } from "../components/Header"
+import AppPicker from "../components/Select"
 import { useAuth } from "../context/AuthContext"
+import { DeliveryItem, deliveriesData } from "../mocks/deliveriesData"
 import { api } from "../service/api"
+import { colors } from "../theme"
 import type {
-  ReportsResponse,
-  DailyStatsResponse,
   DeliveryFromAPI,
+  ReportsResponse
 } from "../types/api"
+import { ERROR_MESSAGES } from "../utils/constants"
+import { logger } from "../utils/logger"
 
 /**
  * Normaliza o status para os valores aceitos
@@ -416,7 +415,8 @@ export default function Charts() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header title="Relatórios" tabs={true} tabsTitle="Relatórios" />
+      <Header title="Relatórios" tabs={true} tabsTitle="Relatórios"
+        onNotificationPress={() => { }} />
 
       <ScrollView
         style={styles.content}
@@ -555,8 +555,8 @@ export default function Charts() {
                         stats.completed / stats.total >= 0.8
                           ? "#10b981"
                           : stats.completed / stats.total >= 0.5
-                          ? "#f59e0b"
-                          : "#ef4444",
+                            ? "#f59e0b"
+                            : "#ef4444",
                     },
                   ]}
                 >
@@ -564,8 +564,8 @@ export default function Charts() {
                     {stats.completed / stats.total >= 0.8
                       ? "Excelente"
                       : stats.completed / stats.total >= 0.5
-                      ? "Bom"
-                      : "Precisa Melhorar"}
+                        ? "Bom"
+                        : "Precisa Melhorar"}
                   </Text>
                 </View>
               </View>
@@ -625,9 +625,8 @@ export default function Charts() {
               <Text style={styles.deliveriesTitle}>
                 📦{" "}
                 {selectedDay
-                  ? `Entregas de ${
-                      dayOptions.find((opt) => opt.value === selectedDay)?.label
-                    }`
+                  ? `Entregas de ${dayOptions.find((opt) => opt.value === selectedDay)?.label
+                  }`
                   : "Todas as Entregas"}
               </Text>
               <View style={styles.deliveriesCountBadge}>
@@ -663,8 +662,7 @@ export default function Charts() {
               keyExtractor={(item) => item.id}
               renderItem={({ item, index }) => {
                 console.log(
-                  `📋 [Charts] Renderizando item ${index + 1}/${
-                    displayedDeliveries.length
+                  `📋 [Charts] Renderizando item ${index + 1}/${displayedDeliveries.length
                   }: ${item.id}`
                 )
                 return <DeliveryCard item={item} />

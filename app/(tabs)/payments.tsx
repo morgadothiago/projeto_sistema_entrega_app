@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react"
+import React, { useCallback, useMemo, useState } from "react"
 import {
   FlatList,
   Modal,
@@ -107,21 +107,11 @@ export default function Payments() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View
-        style={{
-          paddingHorizontal: 10,
-        }}
-      >
-        <Header title="Minha Carteira" />
-      </View>
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: "#f6f5fd",
-          width: "100%",
-          paddingHorizontal: 16,
-        }}
-      >
+      <Header
+        title="Minha Carteira"
+        onNotificationPress={() => routes.push("/settings/notifications")}
+      />
+      <View style={styles.content}>
         {/* Card de saldo aprimorado */}
         <View style={styles.balanceCard}>
           <View style={styles.balanceHeader}>
@@ -145,7 +135,7 @@ export default function Payments() {
               setIsConfirmationModalVisible(true)
             }}
           >
-            <MaterialIcons name="arrow-circle-down" size={18} color="#fff" />
+            <MaterialIcons name="arrow-circle-down" size={18} color={colors.primary} />
             <Text style={styles.withdrawText}>Sacar</Text>
           </Pressable>
         </View>
@@ -227,9 +217,8 @@ export default function Payments() {
           <View style={styles.overlay}>
             <ConfirmationModal
               title="Confirmar Pagamento"
-              message={`Deseja confirmar o pagamento de ${
-                (data as unknown as { value: string })?.value || "R$ 0,00"
-              }?`}
+              message={`Deseja confirmar o pagamento de ${(data as unknown as { value: string })?.value || "R$ 0,00"
+                }?`}
               onConfirm={() => {
                 // Implementação da lógica de confirmação no componente pai
                 handleConfirmPayment(data)
@@ -251,57 +240,67 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.primary,
   },
+  content: {
+    flex: 1,
+    backgroundColor: colors.secondary,
+    paddingHorizontal: 16,
+  },
   withdrawText: {
-    color: colors.secondary,
+    color: colors.primary,
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
 
   /** --- CARD DE SALDO --- **/
   balanceCard: {
     marginTop: 20,
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 20,
+    backgroundColor: "rgba(0, 200, 179, 0.1)",
+    borderRadius: 24,
+    padding: 24,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 179, 0.2)",
   },
   balanceHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 8,
+    gap: 10,
+    marginBottom: 12,
   },
   balanceTitle: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
     color: colors.text,
+    letterSpacing: 0.5,
   },
   balanceValue: {
-    fontSize: 34,
+    fontSize: 40,
     fontWeight: "bold",
     color: colors.active,
-    marginBottom: 16,
+    marginBottom: 20,
+    letterSpacing: 1,
   },
 
   /** Botão sacar dentro do card */
   withdrawButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    backgroundColor: colors.active,
-    paddingVertical: 12,
-    paddingHorizontal: 28,
+    gap: 8,
+    backgroundColor: colors.buttons,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
     borderRadius: 50,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowColor: colors.buttons,
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
   },
   actionGroup: {
     flexDirection: "row",
@@ -315,21 +314,20 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     gap: 12,
-    marginTop: 22,
+    marginTop: 24,
   },
   depositButton: {
     width: "30%",
-
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    backgroundColor: "#4caf50",
-    paddingVertical: 14,
-    borderRadius: 50,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
+    backgroundColor: "#10b981",
+    paddingVertical: 16,
+    borderRadius: 16,
+    shadowColor: "#10b981",
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
     elevation: 6,
   },
   depositText: {
@@ -343,12 +341,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    backgroundColor: colors.active,
-    paddingVertical: 14,
-    borderRadius: 50,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
+    backgroundColor: "#ef4444",
+    paddingVertical: 16,
+    borderRadius: 16,
+    shadowColor: "#ef4444",
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
     elevation: 6,
   },
   transferText: {
@@ -358,58 +356,64 @@ const styles = StyleSheet.create({
   },
 
   filterButton: {
-    marginTop: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    backgroundColor: colors.buttons,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
     borderRadius: 20,
-    alignSelf: "flex-start",
-    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
   },
   filterButtonActive: {
-    backgroundColor: colors.active,
+    backgroundColor: colors.buttons,
+    borderColor: colors.buttons,
   },
   filterButtonText: {
     color: colors.text,
     textAlign: "center",
-    fontWeight: "500",
+    fontWeight: "600",
+    fontSize: 14,
+    letterSpacing: 0.3,
   },
   filterButtonTextActive: {
-    color: "#fff",
+    color: colors.primary,
+    fontWeight: "700",
   },
 
   /** --- LISTA DE PAGAMENTOS --- **/
   listWrapper: {
-    marginTop: 24,
+    marginTop: 28,
     flex: 1,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 20,
+    fontWeight: "700",
     color: colors.text,
-    marginBottom: 12,
-    marginLeft: 4,
-    marginTop: -10,
+    marginBottom: 16,
+    letterSpacing: 0.5,
   },
   listContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    borderRadius: 20,
     padding: 16,
     shadowColor: "#000",
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 8,
     elevation: 4,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
   },
   separator: {
     height: 1,
-    backgroundColor: "#E5E5E5",
-    marginVertical: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    marginVertical: 12,
   },
   emptyText: {
     textAlign: "center",
-    color: "#999",
-    fontSize: 14,
+    color: colors.text,
+    fontSize: 15,
     marginTop: 20,
+    opacity: 0.6,
+    fontWeight: "500",
   },
 
   /** --- BOTÃO FLUTUANTE --- **/
@@ -419,16 +423,16 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   addButton: {
-    backgroundColor: colors.active,
+    backgroundColor: colors.buttons,
     width: 60,
     height: 60,
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 6,
+    shadowColor: colors.buttons,
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
   },
 
   /** --- MODAL --- **/
@@ -436,6 +440,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
   },
 })

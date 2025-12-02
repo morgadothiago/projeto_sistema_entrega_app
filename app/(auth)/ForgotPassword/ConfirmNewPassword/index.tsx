@@ -25,7 +25,7 @@ import styles from "./style"
 
 import LoadingAnimation from "@/app/assets/Loading.json"
 import Input from "@/app/components/Input"
-import { api } from "@/app/service/api"
+import { resetPassword } from "@/app/service/api"
 
 interface ConfirmNewPasswordData {
   newPassword: string
@@ -77,42 +77,16 @@ export default function ConfirmNewPassword() {
         return
       }
 
-      const response = api.post(
-        "/auth/password/reset",
-        {
-          data: {
-            email: email,
-            newPassword: data.newPassword,
-          },
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      )
-
-      if ((await response).status !== 200) {
-        throw new Error("Erro ao alterar senha")
-      }
-
-      Toast.show({
-        type: "success",
-        text1: "Senha alterada!",
-        text2: "Sua senha foi redefinida com sucesso.",
-        visibilityTime: 4000,
+      await resetPassword({
+        email: email,
+        newPassword: data.newPassword,
       })
+
+      // Toast de sucesso já é exibido no service
 
       router.replace("/(auth)/Signin")
     } catch (error: any) {
-      Toast.show({
-        type: "error",
-        text1: "Erro ao alterar senha",
-        text2:
-          error.response?.data?.message ||
-          "Não foi possível alterar a senha. Tente novamente.",
-        visibilityTime: 4000,
-      })
+      // Erro já tratado no service
     } finally {
       setLoading(false)
     }

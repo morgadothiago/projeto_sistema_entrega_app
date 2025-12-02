@@ -24,11 +24,10 @@ import { yupResolver } from "@hookform/resolvers/yup"
 import LottieView from "lottie-react-native"
 import { useForm } from "react-hook-form"
 import { SafeAreaView } from "react-native-safe-area-context"
-import Toast from "react-native-toast-message"
 import styles from "./styles"
 
 import LoadingAnimation from "@/app/assets/Loading.json"
-import { api } from "@/app/service/api"
+import { forgotPassword } from "@/app/service/api"
 
 interface ForgotPasswordData {
   email: string
@@ -64,39 +63,17 @@ export default function SendEmailForm() {
     Keyboard.dismiss()
 
     try {
-      const response = await api.post("/auth/password/forgot", data, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-
-      if (response.status !== 200) {
-        throw new Error("Erro ao enviar email")
-      }
-
-      console.log(response.status)
+      await forgotPassword(data)
 
       setEmailSent(true)
-      Toast.show({
-        type: "success",
-        text1: "Email enviado!",
-        text2: "Verifique sua caixa de entrada para redefinir sua senha.",
-        visibilityTime: 4000,
-      })
+      // Toast já é exibido no service
 
       router.push({
         pathname: "/(auth)/ForgotPassword/ConfirmNewPassword",
         params: { email: data.email }
       })
     } catch (error: any) {
-      Toast.show({
-        type: "error",
-        text1: "Erro ao enviar email",
-        text2:
-          error.response?.data?.message ||
-          "Não foi possível enviar o email. Tente novamente.",
-        visibilityTime: 4000,
-      })
+      // Erro já tratado no service
     } finally {
       setLoading(false)
     }

@@ -2,6 +2,7 @@ import { colors } from "@/app/theme"
 import { Feather } from "@expo/vector-icons"
 import React from "react"
 
+import { Control, Controller, FieldValues, Path, RegisterOptions } from "react-hook-form"
 import {
   FlatList,
   Modal,
@@ -11,7 +12,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native"
-import { Control, Controller, FieldValues, Path, RegisterOptions } from "react-hook-form"
 
 type Option = { label: string; value: string }
 type Props<T extends FieldValues> = {
@@ -203,35 +203,90 @@ export default function Select<T extends FieldValues>({
 
 const styles = StyleSheet.create({
   container: { marginVertical: 8 },
-  label: { marginBottom: 6, color: colors.secondary, fontWeight: "900" },
+  label: {
+    marginBottom: 8,
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 14,
+    letterSpacing: 0.5,
+  },
   selector: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginTop: 30,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   selectorDisabled: {
     backgroundColor: colors.secondary + "40",
     opacity: 0.6,
   },
-  selectorText: { fontSize: 16, color: colors.buttons, fontWeight: "600" },
+  selectorText: {
+    fontSize: 16,
+    color: colors.buttons,
+    fontWeight: "600",
+    letterSpacing: 0.3,
+  },
   selectorTextDisabled: {
     color: colors.secondary + "80",
   },
   modalOverlay: {
     flex: 1,
     justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
   },
   modal: {
     backgroundColor: colors.primary,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    maxHeight: "50%",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: "65%",
+    paddingTop: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 12,
   },
-  option: { padding: 16, borderBottomWidth: 1, borderBottomColor: "#eee" },
-  optionText: { fontSize: 16, color: colors.buttons, fontWeight: "600" },
-  cancel: { padding: 16, alignItems: "center" },
-  cancelText: { color: "red", fontWeight: "600" },
-  errorText: { color: "red", fontSize: 12, marginTop: 4 },
+  option: {
+    padding: 20,
+    marginHorizontal: 16,
+    marginVertical: 4,
+    borderRadius: 12,
+    backgroundColor: "rgba(255, 255, 255, 0.03)",
+    borderBottomWidth: 0,
+  },
+  optionText: {
+    fontSize: 16,
+    color: colors.buttons,
+    fontWeight: "600",
+    letterSpacing: 0.3,
+  },
+  cancel: {
+    padding: 20,
+    margin: 16,
+    marginTop: 8,
+    alignItems: "center",
+    backgroundColor: "rgba(255, 69, 58, 0.1)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 69, 58, 0.3)",
+  },
+  cancelText: {
+    color: "#FF453A",
+    fontWeight: "700",
+    fontSize: 16,
+    letterSpacing: 0.5,
+  },
+  errorText: {
+    color: "#FF453A",
+    fontSize: 12,
+    marginTop: 6,
+    fontWeight: "600",
+  },
 })

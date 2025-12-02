@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import {
   Animated,
   ImageBackground,
@@ -69,14 +69,23 @@ export default function EditProfile() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const fadeAnim = React.useRef(new Animated.Value(0)).current
+  const slideAnim = React.useRef(new Animated.Value(50)).current
 
-  // Animação de fade in
+  // Animação de fade in e slide up
   useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: true,
-    }).start()
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start()
   }, [])
 
   const {
@@ -120,10 +129,6 @@ export default function EditProfile() {
         "complement" as any,
         user?.DeliveryMan?.Address?.complement || ""
       )
-      setValue(
-        "complement" as any,
-        user?.DeliveryMan?.Address?.complement || ""
-      )
       setValue("zipCode" as any, user?.DeliveryMan?.Address?.zipCode || "")
       setValue("city" as any, user?.DeliveryMan?.Address?.city || "")
       setValue("state" as any, user?.DeliveryMan?.Address?.state || "")
@@ -141,14 +146,6 @@ export default function EditProfile() {
   const onSubmit = async (data: any) => {
     setIsSubmitting(true)
     try {
-      console.log("📤 Dados enviados ao backend (SEM máscara):")
-      console.log(JSON.stringify(data, null, 2))
-      console.log("")
-      console.log("✅ CPF sem máscara:", data.cpf)
-      console.log("✅ Telefone sem máscara:", data.phone)
-      console.log("✅ CEP sem máscara:", data.zipCode)
-      console.log("✅ Data sem máscara:", data.dob)
-
       // Simular chamada de API
       await new Promise((resolve) => setTimeout(resolve, 2000))
 
@@ -158,7 +155,7 @@ export default function EditProfile() {
         text2: "Perfil atualizado com sucesso",
       })
 
-      router.push("/(tabs)/profile")
+      router.back()
     } catch (error) {
       Toast.show({
         type: "error",
@@ -179,17 +176,22 @@ export default function EditProfile() {
       <View style={styles.overlay} />
       <SafeAreaView style={{ flex: 1 }}>
         <Header
-          title="Editar perfil"
-          onBackPress={() => router.push("/(tabs)/profile")}
-          tabs={true}
-          tabsTitle="Editar perfil"
+          title="Editar Perfil"
+          onBackPress={() => router.back()}
+          tabs={false}
         />
 
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-          <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+          <Animated.View
+            style={{
+              flex: 1,
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }}
+          >
             <SectionList<FieldItem>
               keyExtractor={(item) => item.name}
               showsVerticalScrollIndicator={false}
@@ -197,7 +199,7 @@ export default function EditProfile() {
               style={{ flex: 1 }}
               sections={[
                 {
-                  title: "👤 Dados Pessoais",
+                  title: "Dados Pessoais",
                   data: [
                     {
                       label: "Nome",
@@ -210,7 +212,7 @@ export default function EditProfile() {
                     {
                       label: "CPF",
                       name: "cpf",
-                      icon: "id-card",
+                      icon: "credit-card",
                       secureTextEntry: false,
                       keyboardType: "numeric",
                       disabled: true,
@@ -233,11 +235,12 @@ export default function EditProfile() {
                       keyboardType: "email-address",
                       icon: "mail",
                       secureTextEntry: false,
+                      disabled: true,
                     },
                     {
                       label: "Telefone",
                       name: "phone",
-                      icon: "phone",
+                      icon: "smartphone",
                       secureTextEntry: false,
                       keyboardType: "phone-pad",
                       disabled: false,
@@ -247,7 +250,7 @@ export default function EditProfile() {
                   ],
                 },
                 {
-                  title: "📍 Endereço",
+                  title: "Endereço",
                   data: [
                     {
                       label: "Rua",
@@ -263,7 +266,6 @@ export default function EditProfile() {
                       keyboardType: "numeric",
                       icon: "hash",
                       secureTextEntry: false,
-
                       disabled: false,
                     },
                     {
@@ -311,7 +313,7 @@ export default function EditProfile() {
                   ],
                 },
                 {
-                  title: "🚗 Veículo",
+                  title: "Veículo",
                   data: [
                     {
                       label: "Marca",
@@ -368,7 +370,10 @@ export default function EditProfile() {
                     unmask={item.unmask}
                     mask={item.mask}
                     editable={!item.disabled}
-                    containerStyle={styles.inputStyle}
+                    containerStyle={[
+                      styles.inputStyle,
+                      item.disabled && styles.disabledInput
+                    ]}
                     keyboardType={item.keyboardType as any}
                   />
                   {errors[item.name as keyof typeof errors] && (
@@ -384,22 +389,23 @@ export default function EditProfile() {
                 </View>
               )}
               stickySectionHeadersEnabled={false}
+              ListFooterComponent={() => (
+                <View style={styles.footerContainer}>
+                  <TouchableOpacity
+                    onPress={handleSubmit(onSubmit)}
+                    style={[
+                      styles.saveButton,
+                      isSubmitting && styles.saveButtonDisabled,
+                    ]}
+                    disabled={isSubmitting}
+                  >
+                    <Text style={styles.saveButtonText}>
+                      {isSubmitting ? "Salvando..." : "Salvar Alterações"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             />
-
-            <View style={styles.buttonFixedContainer}>
-              <TouchableOpacity
-                onPress={handleSubmit(onSubmit)}
-                style={[
-                  styles.saveButton,
-                  isSubmitting && styles.saveButtonDisabled,
-                ]}
-                disabled={isSubmitting}
-              >
-                <Text style={styles.saveButtonText}>
-                  {isSubmitting ? "Salvando..." : "Salvar Alterações"}
-                </Text>
-              </TouchableOpacity>
-            </View>
           </Animated.View>
 
           {isSubmitting && (
@@ -419,97 +425,82 @@ export default function EditProfile() {
     </ImageBackground>
   )
 }
-export const styles = StyleSheet.create({
+
+const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
   },
   contentContainer: {
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 120, // Espaço para o botão fixo
+    paddingTop: 10,
+    paddingBottom: 40,
   },
   sectionHeaderContainer: {
-    marginTop: 10,
+    marginTop: 24,
     marginBottom: 16,
   },
   sectionHeader: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: colors.buttons,
-    letterSpacing: 0.5,
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.secondary,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginLeft: 4,
   },
   itemContainer: {
-    marginBottom: 14,
+    marginBottom: 12,
   },
   inputStyle: {
-    backgroundColor: colors.primary,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    ...Platform.select({
-      ios: {
-        shadowColor: colors.buttons,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 5,
-      },
-    }),
+    paddingVertical: 12,
+  },
+  disabledInput: {
+    opacity: 0.7,
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
   },
   errorText: {
-    color: "#FF3B30",
+    color: "#FF453A",
     fontSize: 12,
     marginTop: 4,
     marginLeft: 8,
     fontWeight: "600",
   },
-  buttonFixedContainer: {
-    position: "absolute",
-    bottom: Platform.OS === "ios" ? 90 : 80, // Acima das tabs
-    left: 0,
-    right: 0,
-    backgroundColor: "transparent",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+  footerContainer: {
+    marginTop: 24,
+    marginBottom: 20,
   },
   saveButton: {
     backgroundColor: colors.buttons,
     paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 12,
-    ...Platform.select({
-      ios: {
-        shadowColor: colors.buttons,
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.3,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   saveButtonDisabled: {
     opacity: 0.6,
   },
   saveButtonText: {
     color: colors.primary,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
+    textTransform: "uppercase",
+    letterSpacing: 1,
   },
   loadingOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0, 0, 0, 0.7)",
     justifyContent: "center",
     alignItems: "center",
@@ -521,7 +512,7 @@ export const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "600",
     color: colors.buttons,
     letterSpacing: 0.5,
