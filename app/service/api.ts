@@ -13,6 +13,7 @@ interface LoginData {
 // Resposta esperada do backend
 interface LoginResponse {
   token: string
+  refreshToken?: string
   user: ApiResponse
 }
 
@@ -90,7 +91,7 @@ export async function login(data: LoginData): Promise<LoginResponse> {
       data
     )
 
-    const { token, user } = response.data
+    const { token, user, refreshToken } = response.data
 
     if (!token || !user) {
       throw new Error("Resposta inválida do servidor.")
@@ -101,6 +102,9 @@ export async function login(data: LoginData): Promise<LoginResponse> {
 
     // Salva no AsyncStorage
     await AsyncStorage.setItem("@token", token)
+    if (refreshToken) {
+      await AsyncStorage.setItem("@refresh_token", refreshToken)
+    }
     await AsyncStorage.setItem("@user", JSON.stringify(user))
 
     Toast.show({
@@ -109,7 +113,7 @@ export async function login(data: LoginData): Promise<LoginResponse> {
       text2: `Bem-vindo, ${user.name || "usuário"} 👋`,
     })
 
-    return { token, user }
+    return { token, user, refreshToken }
   } catch (error: any) {
     Toast.show({
       type: "error",
@@ -283,11 +287,37 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    const originalRequest = error.config
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true
+
+      try {
+        const refreshToken = await AsyncStorage.getItem("@refresh_token")
+        if (refreshToken) {
+          const response = await Axios.post(`${BASE_URL}/auth/refresh-token`, {
+            refreshToken,
+          })
+
+          const { token } = response.data
+
+          if (token) {
+            await AsyncStorage.setItem("@token", token)
+            api.defaults.headers.common["Authorization"] = `Bearer ${token}`
+            originalRequest.headers.Authorization = `Bearer ${token}`
+            return api(originalRequest)
+          }
+        }
+      } catch (refreshError) {
+        // Falha no refresh, desloga
+      }
+    }
+
     if (error.response) {
       const status = error.response.status
       const message = error.response.data?.message
 
-      // 🔒 Token inválido ou expirado
+      // 🔒 Token inválido ou expirado (e falha no refresh)
       if (status === 401) {
         Toast.show({
           type: "error",
@@ -295,12 +325,12 @@ api.interceptors.response.use(
           text2: "Faça login novamente.",
         })
 
-        await AsyncStorage.multiRemove(["@token", "@user"])
+        await AsyncStorage.multiRemove(["@token", "@user", "@refresh_token"])
         // Aqui você pode redirecionar o usuário para a tela de login
       }
 
       // ⚠️ Erros de validação ou requisição
-      if (status >= 400 && status < 500) {
+      if (status >= 400 && status < 500 && status !== 401) {
         Toast.show({
           type: "error",
           text1: "Erro",

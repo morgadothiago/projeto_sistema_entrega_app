@@ -253,7 +253,8 @@ export default function Home() {
 
       // Atualiza automaticamente a cada 5 minutos
       const timer = setInterval(() => {
-        handleRefresh()
+        logger.info("Auto-refresh 5min disparado", { context: "Home" })
+        init()
       }, 5 * 60 * 1000)
 
       return () => clearInterval(timer)

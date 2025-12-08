@@ -1,11 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
-  useState,
   useMemo,
-  useCallback,
+  useState,
 } from "react"
 import { api, login } from "../service/api"
 import { ApiResponse } from "../types/ApiResponse"
@@ -90,9 +90,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null)
       setToken(null)
       await removeItem("@token")
+      await removeItem("@refresh_token")
       await removeItem("@user")
       delete api.defaults.headers.common["Authorization"]
-    } catch (error) {}
+    } catch (error) { }
   }, [])
 
   const contextValue = useMemo(

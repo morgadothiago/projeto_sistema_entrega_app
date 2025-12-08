@@ -8,23 +8,52 @@ import {
   View,
 } from "react-native"
 
-import { useRouter } from "expo-router"
+import { useFocusEffect, useRouter } from "expo-router"
 import { useAuth } from "../context/AuthContext"
+import { api } from "../service/api"
 import { colors } from "../theme"
+import { logger } from "../utils/logger"
 
 import { MaterialIcons } from "@expo/vector-icons"
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import ConfirmationModal from "../components/ConfirmationModal"
 import { Header } from "../components/Header"
 import ListItemPayments from "../components/ListItemPayments"
-import { cashFlowData } from "../mocks/paymentsData"
 import LoadingWithdraw from "./LoadingWithdraw"
 import LoadingWithdrawSuccess from "./LoadingWithdrawSuccess"
+
+// Endpoints fallback types
+type ApiOrder = {
+  id: string
+  code: string
+  status: string
+  value: number
+  price?: number | string // Handle inconsistency
+  createdAt: string
+  updatedAt: string
+  description?: string
+  completedAt?: string
+}
+
+type DeliveryStats = {
+  currentBalance: number
+  totalEarnings: number
+}
+
+type Transaction = {
+  id: string
+  type: "earning" | "withdrawal" // We only have earnings from deliveries for now
+  amount: number
+  description: string
+  status: string
+  createdAt: string
+}
 
 export default function Payments() {
   const { user } = useAuth()
   const routes = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [isFetching, setIsFetching] = useState(true)
   const [showSuccess, setShowSuccess] = useState(false)
   const [withdrawValue, setWithdrawValue] = useState("")
   const [selectedFilter, setSelectedFilter] = useState<
@@ -33,29 +62,88 @@ export default function Payments() {
   const insets = useSafeAreaInsets()
   const [isConfirmationModalVisible, setIsConfirmationModalVisible] =
     useState(false)
-  const [data, setData] = useState(null)
-  const [transactions, setTransactions] = useState(cashFlowData)
+
+  const [balance, setBalance] = useState(0)
+  const [transactions, setTransactions] = useState<any[]>([])
+
+  const fetchFinancialData = useCallback(async () => {
+    if (!user?.id) return
+
+    try {
+      // Usar Promise.all para buscar stats e entregas em paralelo
+      // Endpoint de balance deu 404, então usamos stats + delivery
+      const [statsRes, deliveryRes] = await Promise.all([
+        api.get<DeliveryStats>(`/deliveryman/${user.id}/stats`),
+        api.get<{ data: ApiOrder[] }>(`/delivery`)
+      ])
+
+      const stats = statsRes.data
+      const deliveries = deliveryRes.data.data || []
+
+      // 1. Set Balance
+      // Se currentBalance não vier, usamos totalEarnings como fallback ou 0
+      setBalance(stats.currentBalance || stats.totalEarnings || 0)
+
+      // 2. Map Deliveries to Transactions
+      // Filtrar apenas entregas concluídas ou entregues
+      const completedDeliveries = deliveries.filter(d => {
+        const s = d.status?.toLowerCase()
+        return s === 'delivered' || s === 'completed'
+      })
+
+      const mappedTransactions = completedDeliveries.map(d => {
+        // Normalizar valor (alguns endpoints retornam string price "R$ 10,00", outros value number)
+        let val = d.value
+        if (!val && d.price) {
+          const clean = String(d.price).replace(/[R$\s]/g, "").replace(",", ".")
+          val = parseFloat(clean)
+        }
+        val = val || 0
+
+        return {
+          id: d.id,
+          tipo: 'entrada', // Assumindo entrada para entregas
+          valor: val,
+          // Descrição: Código do pedido ou descrição genérica
+          descricao: `Entrega ${d.code || d.id.slice(0, 8)}`,
+          data: d.completedAt || d.updatedAt || d.createdAt
+        }
+      })
+
+      // Ordenar por data (mais recente primeiro)
+      mappedTransactions.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
+
+      setTransactions(mappedTransactions)
+      logger.info("Dados financeiros carregados (Fallback)", { context: "Payments" })
+
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        logger.warn("Endpoints alternativos também falharam?", error)
+      } else {
+        logger.error("Erro ao carregar dados financeiros", error, { context: "Payments" })
+      }
+    } finally {
+      setIsFetching(false)
+    }
+  }, [user?.id])
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchFinancialData()
+    }, [fetchFinancialData])
+  )
 
   const handleConfirmPayment = useCallback((paymentData: any) => {
-    // Salva o valor do saque
     setWithdrawValue(paymentData?.value || "R$ 0,00")
-
-    // Mostra loading de processamento
     setIsLoading(true)
 
-    // Simulação de processamento (remover na implementação real)
+    // TODO: Implementar chamada real de saque quando backend estiver pronto
     setTimeout(() => {
       setIsLoading(false)
-
-      // Limpar a lista de transações após o saque
-      setTransactions([])
-
-      // Mostra tela de sucesso
       setShowSuccess(true)
-
-      // Aqui você pode adicionar a chamada à API ou outra lógica necessária
+      fetchFinancialData() // Recarrega saldo (simulado)
     }, 2000)
-  }, [])
+  }, [fetchFinancialData])
 
   const handleSuccessFinish = useCallback(() => {
     setShowSuccess(false)
@@ -87,15 +175,15 @@ export default function Payments() {
   const ItemSeparator = useCallback(() => <View style={styles.separator} />, [])
 
   const ListEmpty = useCallback(() => (
-    <Text style={styles.emptyText}>Nenhuma transação encontrada.</Text>
-  ), [])
+    <Text style={styles.emptyText}>
+      {isFetching ? "Carregando..." : "Nenhuma transação encontrada."}
+    </Text>
+  ), [isFetching])
 
-  // Mostra loading de processamento
   if (isLoading) {
     return <LoadingWithdraw />
   }
 
-  // Mostra tela de sucesso
   if (showSuccess) {
     return (
       <LoadingWithdrawSuccess
@@ -105,6 +193,8 @@ export default function Payments() {
     )
   }
 
+  const formattedBalance = `R$ ${balance.toFixed(2).replace('.', ',')}`
+
   return (
     <SafeAreaView style={styles.container}>
       <Header
@@ -112,7 +202,6 @@ export default function Payments() {
         onNotificationPress={() => routes.push("/settings/notifications")}
       />
       <View style={styles.content}>
-        {/* Card de saldo aprimorado */}
         <View style={styles.balanceCard}>
           <View style={styles.balanceHeader}>
             <MaterialIcons
@@ -123,7 +212,9 @@ export default function Payments() {
             <Text style={styles.balanceTitle}>Saldo disponível</Text>
           </View>
 
-          <Text style={styles.balanceValue}>R$ 1.000,00</Text>
+          <Text style={styles.balanceValue}>
+            {isFetching && balance === 0 ? "..." : formattedBalance}
+          </Text>
 
           <Pressable
             style={({ pressed }) => [
@@ -131,7 +222,6 @@ export default function Payments() {
               { opacity: pressed ? 0.9 : 1 },
             ]}
             onPress={() => {
-              setData({ value: "R$ 1.000,00" } as any)
               setIsConfirmationModalVisible(true)
             }}
           >
@@ -181,7 +271,6 @@ export default function Payments() {
           </View>
         </View>
 
-        {/* Lista de pagamentos */}
         <View style={styles.listWrapper}>
           <Text style={styles.sectionTitle}>Histórico de transações</Text>
 
@@ -201,7 +290,6 @@ export default function Payments() {
           </View>
         </View>
 
-        {/* BOTÃO FLUTUANTE */}
         <View
           style={[
             styles.floatingButtonContainer,
@@ -216,12 +304,10 @@ export default function Payments() {
         >
           <View style={styles.overlay}>
             <ConfirmationModal
-              title="Confirmar Pagamento"
-              message={`Deseja confirmar o pagamento de ${(data as unknown as { value: string })?.value || "R$ 0,00"
-                }?`}
+              title="Confirmar Saque"
+              message={`Deseja transferir ${formattedBalance} para sua chave PIX?`}
               onConfirm={() => {
-                // Implementação da lógica de confirmação no componente pai
-                handleConfirmPayment(data)
+                handleConfirmPayment({ value: formattedBalance })
                 setIsConfirmationModalVisible(false)
               }}
               onCancel={() => {
@@ -251,8 +337,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0.5,
   },
-
-  /** --- CARD DE SALDO --- **/
   balanceCard: {
     marginTop: 20,
     backgroundColor: "rgba(0, 200, 179, 0.1)",
@@ -287,8 +371,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     letterSpacing: 1,
   },
-
-  /** Botão sacar dentro do card */
   withdrawButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -307,8 +389,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
   },
-
-  /** --- BOTÕES EXTERNOS --- **/
   actionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -354,7 +434,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
-
   filterButton: {
     paddingVertical: 12,
     paddingHorizontal: 20,
@@ -378,8 +457,6 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: "700",
   },
-
-  /** --- LISTA DE PAGAMENTOS --- **/
   listWrapper: {
     marginTop: 28,
     flex: 1,
@@ -415,8 +492,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
     fontWeight: "500",
   },
-
-  /** --- BOTÃO FLUTUANTE --- **/
   floatingButtonContainer: {
     position: "absolute",
     alignSelf: "center",
@@ -434,8 +509,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-
-  /** --- MODAL --- **/
   overlay: {
     flex: 1,
     alignItems: "center",
