@@ -44,11 +44,11 @@ const STATUS_TEXT = {
 
 // ✅ OTIMIZAÇÃO 2: Helper functions fora do componente
 const getStatusColor = (status: string): string => {
-  return STATUS_COLORS[status as keyof typeof STATUS_COLORS] || colors.text
+  return STATUS_COLORS[status?.toUpperCase() as keyof typeof STATUS_COLORS] || colors.text
 }
 
 const getStatusText = (status: string): string => {
-  return STATUS_TEXT[status as keyof typeof STATUS_TEXT] || status
+  return STATUS_TEXT[status?.toUpperCase() as keyof typeof STATUS_TEXT] || status
 }
 
 const formatAddress = (delivery: ApiOrder): string => {
@@ -79,14 +79,15 @@ export default function Delivery() {
 
   // ✅ OTIMIZAÇÃO 4: Memoizar cálculos pesados
   const { activeDelivery, availableDeliveries, stats } = useMemo(() => {
-    const active = orders.find(
-      (order) => order.status === "IN_TRANSIT" || order.status === "IN_PROGRESS"
-    )
+    const active = orders.find((order) => {
+      const s = order.status?.toUpperCase()
+      return s === "IN_TRANSIT" || s === "IN_PROGRESS"
+    })
 
-    const available = orders.filter((order) => order.status === "PENDING")
+    const available = orders.filter((order) => order.status?.toUpperCase() === "PENDING")
 
     const delivered = orders.filter(
-      (order) => order.status === "DELIVERED"
+      (order) => order.status?.toUpperCase() === "DELIVERED"
     ).length
 
     return {
@@ -204,10 +205,15 @@ export default function Delivery() {
           data: { id: order.id, code: order.code },
         })
 
-        // Recarregar lista - isso vai fazer a tela mudar automaticamente
-        // para "Entrega em Andamento" porque o useMemo detectará
-        // que há uma entrega com status IN_PROGRESS
-        await getAllDeliverys()
+        // Atualiza estado local imediatamente para feedback instantâneo
+        setOrders(currentOrders =>
+          currentOrders.map(o =>
+            o.id === order.id ? { ...o, status: "IN_PROGRESS" } : o
+          )
+        )
+
+        // Recarregar em background para garantir sincronia
+        getAllDeliverys()
       } catch (error: any) {
         logger.error("Erro ao aceitar entrega", error, {
           context: "Delivery",
@@ -350,8 +356,15 @@ export default function Delivery() {
           data: { id: selectedOrder.id, code: selectedOrder.code },
         })
 
-        // Recarregar lista
-        await getAllDeliverys()
+        // Atualiza estado local imediatamente
+        setOrders(currentOrders =>
+          currentOrders.map(o =>
+            o.id === selectedOrder.id ? { ...o, status: "DELIVERED" } : o
+          )
+        )
+
+        // Recarregar em background
+        getAllDeliverys()
       } catch (error: any) {
         // Log detalhado do erro
         logger.error("Erro ao finalizar entrega", error, {
