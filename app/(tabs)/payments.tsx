@@ -74,7 +74,7 @@ export default function Payments() {
       // Endpoint de balance deu 404, então usamos stats + delivery
       const [statsRes, deliveryRes] = await Promise.all([
         api.get<DeliveryStats>(`/deliveryman/${user.id}/stats`),
-        api.get<{ data: ApiOrder[] }>(`/delivery`)
+        api.get<{ data: ApiOrder[] }>(`/delivery`, { params: { limit: 100 } })
       ])
 
       const stats = statsRes.data

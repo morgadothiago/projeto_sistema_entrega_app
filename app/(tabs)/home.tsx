@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useFocusEffect, useRouter } from "expo-router"
 import React, { useCallback, useRef, useState } from "react"
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native"
+import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Header } from "../components/Header"
 import QuickActionButton from "../components/QuickActionButton"
@@ -133,7 +133,7 @@ export default function Home() {
     try {
       const [statsResponse, deliveriesResponse] = await Promise.all([
         api.get(`/deliveryman/${user.id}/stats`, { signal: abortSignal }),
-        api.get(`/delivery`, { signal: abortSignal })
+        api.get(`/delivery`, { params: { limit: 100 }, signal: abortSignal })
       ])
 
       const statsData = statsResponse.data
@@ -275,6 +275,18 @@ export default function Home() {
     }
   }
 
+  const handleClearCache = async () => {
+    try {
+      await AsyncStorage.removeItem(CACHE_KEY_USER)
+      await AsyncStorage.removeItem(CACHE_KEY_STATS)
+      Alert.alert("Cache Limpo", "Os dados locais foram removidos. Recarregando...")
+      setDeliveryManData(null)
+      init()
+    } catch (error) {
+      Alert.alert("Erro", "Falha ao limpar cache")
+    }
+  }
+
   if (isLoading || !deliveryManData) {
     return (
       <SafeAreaView style={styles.container}>
@@ -348,6 +360,12 @@ export default function Home() {
             title="Estatísticas"
             color="#f59e0b"
             onPress={() => router.push("/(tabs)/charts")}
+          />
+          <QuickActionButton
+            icon="trash-outline"
+            title="Limpar Cache"
+            color="#ef4444"
+            onPress={handleClearCache}
           />
         </ScrollView>
 
