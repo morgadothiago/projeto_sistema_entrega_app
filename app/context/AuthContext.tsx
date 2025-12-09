@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage"
 import React, {
   createContext,
   useCallback,
@@ -7,6 +6,7 @@ import React, {
   useMemo,
   useState,
 } from "react"
+import { clearSession, getItem, saveItem } from "../helpers/Storage"
 import { api, login } from "../service/api"
 import { ApiResponse } from "../types/ApiResponse"
 
@@ -25,18 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Helpers do AsyncStorage
-  async function saveItem(key: string, value: string) {
-    await AsyncStorage.setItem(key, value)
-  }
-
-  async function getItem(key: string) {
-    return await AsyncStorage.getItem(key)
-  }
-
-  async function removeItem(key: string) {
-    await AsyncStorage.removeItem(key)
-  }
+  // Helpers do AsyncStorage removidos em favor do import global
 
   // 🔹 Carrega token e usuário do AsyncStorage ao iniciar o app
   useEffect(() => {
@@ -89,9 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setUser(null)
       setToken(null)
-      await removeItem("@token")
-      await removeItem("@refresh_token")
-      await removeItem("@user")
+      await clearSession()
       delete api.defaults.headers.common["Authorization"]
     } catch (error) { }
   }, [])

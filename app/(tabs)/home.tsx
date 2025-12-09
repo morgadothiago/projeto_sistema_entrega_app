@@ -64,8 +64,8 @@ export default function Home() {
   const [nextUpdateTime, setNextUpdateTime] = useState<Date | null>(null)
   const lastFetchRef = useRef<number>(0)
 
-  const CACHE_KEY_USER = "@delivery_app:user_data"
-  const CACHE_KEY_STATS = "@delivery_app:user_stats"
+  const CACHE_KEY_USER = user?.id ? `@delivery_app:user_data:${user.id}` : null
+  const CACHE_KEY_STATS = user?.id ? `@delivery_app:user_stats:${user.id}` : null
 
   // Função para carregar dados do usuário
   const loadUserData = async (abortSignal?: AbortSignal) => {
@@ -79,7 +79,9 @@ export default function Home() {
       const response = await api.get(`/users/${user.id}`, { signal: abortSignal })
       const data = response.data
       setDeliveryManData(data)
-      await AsyncStorage.setItem(CACHE_KEY_USER, JSON.stringify(data))
+      if (CACHE_KEY_USER) {
+        await AsyncStorage.setItem(CACHE_KEY_USER, JSON.stringify(data))
+      }
 
       logger.debug("Dados do usuário carregados", {
         context: "Home",
@@ -167,12 +169,16 @@ export default function Home() {
 
       // Salvar no cache com a data de hoje para reset automático
       const todayDate = new Date().toDateString()
-      await AsyncStorage.setItem(CACHE_KEY_STATS, JSON.stringify({
-        completed: todayCompletedCount,
-        todayEarnings: todayEarnings,
-        balance: balance,
-        date: todayDate // Importante para o reset de 24h
-      }))
+      // Salvar no cache com a data de hoje para reset automático
+      if (CACHE_KEY_STATS) {
+        const todayDate = new Date().toDateString()
+        await AsyncStorage.setItem(CACHE_KEY_STATS, JSON.stringify({
+          completed: todayCompletedCount,
+          todayEarnings: todayEarnings,
+          balance: balance,
+          date: todayDate // Importante para o reset de 24h
+        }))
+      }
 
       logger.info("Estatísticas Home atualizadas (Cálculo Local)", {
         context: "Home",
@@ -203,24 +209,26 @@ export default function Home() {
     // 1. Tentar carregar do cache primeiro (se não tiver dados)
     if (!deliveryManData) {
       try {
-        const [cachedUser, cachedStats] = await Promise.all([
-          AsyncStorage.getItem(CACHE_KEY_USER),
-          AsyncStorage.getItem(CACHE_KEY_STATS)
-        ])
+        if (CACHE_KEY_USER && CACHE_KEY_STATS) {
+          const [cachedUser, cachedStats] = await Promise.all([
+            AsyncStorage.getItem(CACHE_KEY_USER),
+            AsyncStorage.getItem(CACHE_KEY_STATS)
+          ])
 
-        if (cachedUser) {
-          setDeliveryManData(JSON.parse(cachedUser))
-        }
+          if (cachedUser) {
+            setDeliveryManData(JSON.parse(cachedUser))
+          }
 
-        if (cachedStats) {
-          const parsedStats = JSON.parse(cachedStats)
-          const today = new Date().toDateString()
+          if (cachedStats) {
+            const parsedStats = JSON.parse(cachedStats)
+            const today = new Date().toDateString()
 
-          // Verifica se o cache é de hoje. Se não for, apaga (reset 24h)
-          if (parsedStats.date === today) {
-            setStats(parsedStats)
-          } else {
-            await AsyncStorage.removeItem(CACHE_KEY_STATS)
+            // Verifica se o cache é de hoje. Se não for, apaga (reset 24h)
+            if (parsedStats.date === today) {
+              setStats(parsedStats)
+            } else {
+              await AsyncStorage.removeItem(CACHE_KEY_STATS)
+            }
           }
         }
       } catch (e) {
@@ -277,8 +285,10 @@ export default function Home() {
 
   const handleClearCache = async () => {
     try {
-      await AsyncStorage.removeItem(CACHE_KEY_USER)
-      await AsyncStorage.removeItem(CACHE_KEY_STATS)
+      if (CACHE_KEY_USER && CACHE_KEY_STATS) {
+        await AsyncStorage.removeItem(CACHE_KEY_USER)
+        await AsyncStorage.removeItem(CACHE_KEY_STATS)
+      }
       Alert.alert("Cache Limpo", "Os dados locais foram removidos. Recarregando...")
       setDeliveryManData(null)
       init()

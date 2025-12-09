@@ -1,4 +1,5 @@
 import fundoBg from "@/app/assets/funndo.png"
+import LoadingAnimation from "@/app/assets/Loading.json"
 import { Button } from "@/app/components/Button"
 import { Header } from "@/app/components/Header"
 import Input from "@/app/components/Input"
@@ -8,9 +9,9 @@ import { useMultiStep } from "@/app/context/MultiStepContext"
 import { licensePlateMask, removeLicensePlateMask } from "@/app/helpers"
 import { api } from "@/app/service/api"
 import { RegisterFormData } from "@/app/types/UserData"
-import AsyncStorage from "@react-native-async-storage/async-storage"
 import { ImageBackground } from "expo-image"
 import { router } from "expo-router"
+import LottieView from "lottie-react-native"
 import React, { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import {
@@ -22,10 +23,10 @@ import {
   View,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { styles } from "./styles"
-import LottieView from "lottie-react-native"
-import LoadingAnimation from "@/app/assets/Loading.json"
 import Toast from "react-native-toast-message"
+
+import { getToken } from "@/app/helpers/Storage"
+import { styles } from "./styles"
 
 type VehicleTypeOption = {
   label: string
@@ -79,7 +80,7 @@ export default function VehiclesInfo() {
       const response = await api.get("/vehicle-types", {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${await AsyncStorage.getItem("@token")}`,
+          Authorization: `Bearer ${await getToken()}`,
         },
       })
       const data = Array.isArray(response.data?.data) ? response.data.data : []

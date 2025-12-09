@@ -1,8 +1,8 @@
-import AsyncStorage from "@react-native-async-storage/async-storage"
 import Axios, { AxiosResponse } from "axios"
 import Constants from "expo-constants"
 import { Platform } from "react-native"
 import Toast from "react-native-toast-message"
+import { clearSession, getItem, getToken, saveItem } from "../helpers/Storage"
 import { ApiResponse } from "../types/ApiResponse"
 
 interface LoginData {
@@ -100,12 +100,12 @@ export async function login(data: LoginData): Promise<LoginResponse> {
     // Define token global no axios
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`
 
-    // Salva no AsyncStorage
-    await AsyncStorage.setItem("@token", token)
+    // Salvar no AsyncStorage
+    await saveItem("@token", token)
     if (refreshToken) {
-      await AsyncStorage.setItem("@refresh_token", refreshToken)
+      await saveItem("@refresh_token", refreshToken)
     }
-    await AsyncStorage.setItem("@user", JSON.stringify(user))
+    await saveItem("@user", JSON.stringify(user))
 
     Toast.show({
       type: "success",
@@ -273,7 +273,7 @@ export async function resetPassword(data: {
 // -------------------- INTERCEPTORES GLOBAIS --------------------
 api.interceptors.request.use(
   async (config) => {
-    const token = await AsyncStorage.getItem("@token")
+    const token = await getToken()
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -293,7 +293,7 @@ api.interceptors.response.use(
       originalRequest._retry = true
 
       try {
-        const refreshToken = await AsyncStorage.getItem("@refresh_token")
+        const refreshToken = await getItem("@refresh_token")
         if (refreshToken) {
           const response = await Axios.post(`${BASE_URL}/auth/refresh-token`, {
             refreshToken,
@@ -302,7 +302,7 @@ api.interceptors.response.use(
           const { token } = response.data
 
           if (token) {
-            await AsyncStorage.setItem("@token", token)
+            await saveItem("@token", token)
             api.defaults.headers.common["Authorization"] = `Bearer ${token}`
             originalRequest.headers.Authorization = `Bearer ${token}`
             return api(originalRequest)
@@ -325,7 +325,7 @@ api.interceptors.response.use(
           text2: "Faça login novamente.",
         })
 
-        await AsyncStorage.multiRemove(["@token", "@user", "@refresh_token"])
+        await clearSession()
         // Aqui você pode redirecionar o usuário para a tela de login
       }
 
