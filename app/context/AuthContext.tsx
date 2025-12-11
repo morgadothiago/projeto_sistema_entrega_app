@@ -9,6 +9,7 @@ import React, {
 import { clearSession, getItem, saveItem } from "../helpers/Storage"
 import { api, login } from "../service/api"
 import { ApiResponse } from "../types/ApiResponse"
+import { STORAGE_KEYS } from "../utils/constants"
 
 type AuthContextData = {
   user: ApiResponse | null
@@ -31,8 +32,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function loadStorageData() {
       try {
-        const storagedToken = await getItem("@token")
-        const storagedUser = await getItem("@user")
+        const storagedToken = await getItem(STORAGE_KEYS.TOKEN)
+        const storagedUser = await getItem(STORAGE_KEYS.USER)
 
         if (storagedToken && storagedUser) {
           api.defaults.headers.common[
@@ -65,9 +66,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Atualiza header global do Axios
       api.defaults.headers.common["Authorization"] = `Bearer ${responseToken}`
 
-      // Persiste no AsyncStorage (chaves padronizadas com '@')
-      await saveItem("@token", responseToken)
-      await saveItem("@user", JSON.stringify(userData))
+      // Persiste no AsyncStorage (chaves padronizadas)
+      await saveItem(STORAGE_KEYS.TOKEN, responseToken)
+      await saveItem(STORAGE_KEYS.USER, JSON.stringify(userData))
     } catch (error: any) {
       throw error
     }

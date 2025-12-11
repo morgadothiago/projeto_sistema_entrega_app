@@ -3,7 +3,7 @@ import * as SecureStore from "expo-secure-store"
 import { Platform } from "react-native"
 
 // Chaves que devem ser salvas de forma segura
-const SECURE_KEYS = ["@token", "@refresh_token"]
+const SECURE_KEYS = ["token", "refresh_token"]
 
 // Helper para saber se devemos usar SecureStore (apenas tokens)
 function isSecureKey(key: string): boolean {
@@ -17,12 +17,7 @@ function isSecureKey(key: string): boolean {
 async function saveItem(key: string, value: string) {
   try {
     if (isSecureKey(key)) {
-      if (Platform.OS !== "web") {
-        await SecureStore.setItemAsync(key, value)
-      } else {
-        // Fallback para web (não seguro, mas funcional)
-        await AsyncStorage.setItem(key, value)
-      }
+      await SecureStore.setItemAsync(key, value)
     } else {
       await AsyncStorage.setItem(key, value)
     }
@@ -37,11 +32,7 @@ async function saveItem(key: string, value: string) {
 async function getItem(key: string): Promise<string | null> {
   try {
     if (isSecureKey(key)) {
-      if (Platform.OS !== "web") {
-        return await SecureStore.getItemAsync(key)
-      } else {
-        return await AsyncStorage.getItem(key)
-      }
+      return await SecureStore.getItemAsync(key)
     } else {
       return await AsyncStorage.getItem(key)
     }
@@ -57,11 +48,7 @@ async function getItem(key: string): Promise<string | null> {
 async function removeItem(key: string) {
   try {
     if (isSecureKey(key)) {
-      if (Platform.OS !== "web") {
-        await SecureStore.deleteItemAsync(key)
-      } else {
-        await AsyncStorage.removeItem(key)
-      }
+      await SecureStore.deleteItemAsync(key)
     } else {
       await AsyncStorage.removeItem(key)
     }
@@ -74,16 +61,16 @@ async function removeItem(key: string) {
  * Helper específico para pegar tokens (mais semântico)
  */
 async function getToken(): Promise<string | null> {
-  return await getItem("@token")
+  return await getItem("token")
 }
 
 /**
  * Helper para limpar todos os dados de sessão (logout)
  */
 async function clearSession() {
-  await removeItem("@token")
-  await removeItem("@refresh_token")
-  await removeItem("@user")
+  await removeItem("token")
+  await removeItem("refresh_token")
+  await removeItem("user")
   // Adicionar outras chaves de sessão aqui se necessário
 }
 

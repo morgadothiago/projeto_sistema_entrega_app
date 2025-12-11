@@ -4,6 +4,7 @@ import { Platform } from "react-native"
 import Toast from "react-native-toast-message"
 import { clearSession, getItem, getToken, saveItem } from "../helpers/Storage"
 import { ApiResponse } from "../types/ApiResponse"
+import { STORAGE_KEYS } from "../utils/constants"
 
 interface LoginData {
   email: string
@@ -101,11 +102,11 @@ export async function login(data: LoginData): Promise<LoginResponse> {
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`
 
     // Salvar no AsyncStorage
-    await saveItem("@token", token)
+    await saveItem(STORAGE_KEYS.TOKEN, token)
     if (refreshToken) {
-      await saveItem("@refresh_token", refreshToken)
+      await saveItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken)
     }
-    await saveItem("@user", JSON.stringify(user))
+    await saveItem(STORAGE_KEYS.USER, JSON.stringify(user))
 
     Toast.show({
       type: "success",
@@ -293,7 +294,7 @@ api.interceptors.response.use(
       originalRequest._retry = true
 
       try {
-        const refreshToken = await getItem("@refresh_token")
+        const refreshToken = await getItem(STORAGE_KEYS.REFRESH_TOKEN)
         if (refreshToken) {
           const response = await Axios.post(`${BASE_URL}/auth/refresh-token`, {
             refreshToken,
@@ -302,7 +303,7 @@ api.interceptors.response.use(
           const { token } = response.data
 
           if (token) {
-            await saveItem("@token", token)
+            await saveItem(STORAGE_KEYS.TOKEN, token)
             api.defaults.headers.common["Authorization"] = `Bearer ${token}`
             originalRequest.headers.Authorization = `Bearer ${token}`
             return api(originalRequest)

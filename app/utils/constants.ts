@@ -31,10 +31,11 @@ export const API_CONFIG = {
 
 // Storage Keys
 export const STORAGE_KEYS = {
-  TOKEN: '@token',
-  USER: '@user',
-  THEME: '@theme',
-  LANGUAGE: '@language',
+  TOKEN: 'token',
+  REFRESH_TOKEN: 'refresh_token',
+  USER: 'user',
+  THEME: 'theme',
+  LANGUAGE: 'language',
 } as const;
 
 // Animation Durations
