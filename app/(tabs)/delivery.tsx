@@ -44,11 +44,16 @@ const STATUS_TEXT = {
 
 // ✅ OTIMIZAÇÃO 2: Helper functions fora do componente
 const getStatusColor = (status: string): string => {
-  return STATUS_COLORS[status?.toUpperCase() as keyof typeof STATUS_COLORS] || colors.text
+  return (
+    STATUS_COLORS[status?.toUpperCase() as keyof typeof STATUS_COLORS] ||
+    colors.text
+  )
 }
 
 const getStatusText = (status: string): string => {
-  return STATUS_TEXT[status?.toUpperCase() as keyof typeof STATUS_TEXT] || status
+  return (
+    STATUS_TEXT[status?.toUpperCase() as keyof typeof STATUS_TEXT] || status
+  )
 }
 
 const formatAddress = (delivery: ApiOrder): string => {
@@ -84,7 +89,9 @@ export default function Delivery() {
       return s === "IN_TRANSIT" || s === "IN_PROGRESS"
     })
 
-    const available = orders.filter((order) => order.status?.toUpperCase() === "PENDING")
+    const available = orders.filter(
+      (order) => order.status?.toUpperCase() === "PENDING"
+    )
 
     const delivered = orders.filter(
       (order) => order.status?.toUpperCase() === "DELIVERED"
@@ -116,6 +123,12 @@ export default function Delivery() {
       })
 
       setOrders(response.data.data)
+      if (response.data.data?.length > 0) {
+        logger.info("Primeira entrega carregada (Debug):", {
+          context: "Delivery",
+          data: response.data.data[0],
+        })
+      }
       logger.info("Entregas carregadas com sucesso", {
         context: "Delivery",
         data: { count: response.data.data?.length },
@@ -206,8 +219,8 @@ export default function Delivery() {
         })
 
         // Atualiza estado local imediatamente para feedback instantâneo
-        setOrders(currentOrders =>
-          currentOrders.map(o =>
+        setOrders((currentOrders) =>
+          currentOrders.map((o) =>
             o.id === order.id ? { ...o, status: "IN_PROGRESS" } : o
           )
         )
@@ -357,8 +370,8 @@ export default function Delivery() {
         })
 
         // Atualiza estado local imediatamente
-        setOrders(currentOrders =>
-          currentOrders.map(o =>
+        setOrders((currentOrders) =>
+          currentOrders.map((o) =>
             o.id === selectedOrder.id ? { ...o, status: "DELIVERED" } : o
           )
         )
@@ -411,7 +424,7 @@ export default function Delivery() {
   const renderDeliveryItem = useCallback(
     ({ item }: { item: ApiOrder }) => (
       <View style={styles.deliveryCard}>
-        <View style={styles.deliveryHeader} >
+        <View style={styles.deliveryHeader}>
           <Text style={styles.deliveryCode}>{item.code}</Text>
           <View
             style={[

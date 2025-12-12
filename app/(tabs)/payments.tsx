@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Text,
   View,
+  Alert,
 } from "react-native"
 
 import { useFocusEffect, useRouter } from "expo-router"
@@ -23,30 +24,42 @@ import LoadingWithdraw from "./LoadingWithdraw"
 import LoadingWithdrawSuccess from "./LoadingWithdrawSuccess"
 
 // Endpoints fallback types
-type ApiOrder = {
-  id: string
-  code: string
-  status: string
-  value: number
-  price?: number | string // Handle inconsistency
-  createdAt: string
-  updatedAt: string
-  description?: string
-  completedAt?: string
-}
+// type ApiOrder = {
+//   id: string
+//   code: string
+//   status: string
+//   value: number
+//   price?: number | string // Handle inconsistency
+//   createdAt: string
+//   updatedAt: string
+//   description?: string
+//   completedAt?: string
+// }
 
-type DeliveryStats = {
-  currentBalance: number
-  totalEarnings: number
-}
-
-type Transaction = {
+type BackendTransaction = {
   id: string
-  type: "earning" | "withdrawal" // We only have earnings from deliveries for now
+  type: "earning" | "withdrawal"
   amount: number
   description: string
   status: string
   createdAt: string
+  pixKey?: string
+}
+
+type DeliveryStats = {
+  currentBalance: number
+  totalEarned: number
+  totalWithdrawn: number
+  pendingBalance: number
+  transactions: BackendTransaction[]
+}
+
+type MappedTransaction = {
+  id: string
+  tipo: "entrada" | "saida"
+  valor: number
+  descricao: string
+  data: string
 }
 
 export default function Payments() {
@@ -64,64 +77,34 @@ export default function Payments() {
     useState(false)
 
   const [balance, setBalance] = useState(0)
-  const [transactions, setTransactions] = useState<any[]>([])
+  const [transactions, setTransactions] = useState<MappedTransaction[]>([])
 
   const fetchFinancialData = useCallback(async () => {
     if (!user?.id) return
 
     try {
-      // Usar Promise.all para buscar stats e entregas em paralelo
-      // Endpoint de balance deu 404, então usamos stats + delivery
-      const [statsRes, deliveryRes] = await Promise.all([
-        api.get<DeliveryStats>(`/deliveryman/${user.id}/stats`),
-        api.get<{ data: ApiOrder[] }>(`/delivery`, { params: { limit: 100 } })
-      ])
+      const { data: balanceData } = await api.get<DeliveryStats>(
+        `/deliveryman/${user.id}/balance`
+      )
 
-      const stats = statsRes.data
-      const deliveries = deliveryRes.data.data || []
+      setBalance(balanceData.currentBalance)
+      setTransactions(
+        balanceData.transactions.map((item) => ({
+          id: item.id,
+          tipo: item.type === "earning" ? "entrada" : "saida",
+          valor: item.amount,
+          descricao: item.description,
+          data: item.createdAt,
+        }))
+      )
 
-      // 1. Set Balance
-      // Se currentBalance não vier, usamos totalEarnings como fallback ou 0
-      setBalance(stats.currentBalance || stats.totalEarnings || 0)
-
-      // 2. Map Deliveries to Transactions
-      // Filtrar apenas entregas concluídas ou entregues
-      const completedDeliveries = deliveries.filter(d => {
-        const s = d.status?.toLowerCase()
-        return s === 'delivered' || s === 'completed'
+      logger.info("Dados financeiros carregados", {
+        context: "Payments",
       })
-
-      const mappedTransactions = completedDeliveries.map(d => {
-        // Normalizar valor (alguns endpoints retornam string price "R$ 10,00", outros value number)
-        let val = d.value
-        if (!val && d.price) {
-          const clean = String(d.price).replace(/[R$\s]/g, "").replace(",", ".")
-          val = parseFloat(clean)
-        }
-        val = val || 0
-
-        return {
-          id: d.id,
-          tipo: 'entrada', // Assumindo entrada para entregas
-          valor: val,
-          // Descrição: Código do pedido ou descrição genérica
-          descricao: `Entrega ${d.code || d.id.slice(0, 8)}`,
-          data: d.completedAt || d.updatedAt || d.createdAt
-        }
-      })
-
-      // Ordenar por data (mais recente primeiro)
-      mappedTransactions.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
-
-      setTransactions(mappedTransactions)
-      logger.info("Dados financeiros carregados (Fallback)", { context: "Payments" })
-
     } catch (error: any) {
-      if (error.response?.status === 404) {
-        logger.warn("Endpoints alternativos também falharam?", error)
-      } else {
-        logger.error("Erro ao carregar dados financeiros", error, { context: "Payments" })
-      }
+      logger.error("Erro ao carregar dados financeiros", error, {
+        context: "Payments",
+      })
     } finally {
       setIsFetching(false)
     }
@@ -133,17 +116,71 @@ export default function Payments() {
     }, [fetchFinancialData])
   )
 
-  const handleConfirmPayment = useCallback((paymentData: any) => {
-    setWithdrawValue(paymentData?.value || "R$ 0,00")
+  const handleConfirmPayment = useCallback(async () => {
+    setWithdrawValue(formattedBalance)
     setIsLoading(true)
 
-    // TODO: Implementar chamada real de saque quando backend estiver pronto
-    setTimeout(() => {
+    try {
+      const amount = balance
+
+      if (!amount || amount <= 0) {
+        logger.warn("Tentativa de saque com valor inválido", {
+          data: { amount },
+        })
+        setIsLoading(false)
+        return
+      }
+
+      // The check `if (amount > available)` is now redundant as `amount` is `balance`
+      // and `available` is also derived from `balance`.
+      // If the backend handles insufficient balance, this client-side check can be simplified or removed.
+
+      await api.post(`/deliveryman/${user?.id}/withdraw`, {
+        amount,
+        email: user?.email,
+      })
+
+      // --- Lógica para notificar o admin (requer implementação no backend) ---
+      // Após um saque bem-sucedido, você pode fazer uma nova chamada à API
+      // para um endpoint que notifique o administrador.
+      // Exemplo (descomente e adapte quando o endpoint estiver pronto):
+      /*
+      try {
+        await api.post('/admin/notify-withdrawal', {
+          userId: user?.id,
+          amount: amount,
+          // Inclua outros detalhes relevantes para o admin
+        });
+        logger.info("Admin notificado sobre o saque", { context: "Payments" });
+      } catch (notificationError) {
+        logger.error("Falha ao notificar o admin sobre o saque", notificationError, { context: "Payments" });
+      }
+      */
+      // ---------------------------------------------------------------------
+
       setIsLoading(false)
       setShowSuccess(true)
-      fetchFinancialData() // Recarrega saldo (simulado)
-    }, 2000)
-  }, [fetchFinancialData])
+      fetchFinancialData()
+    } catch (error: any) {
+      logger.error("Erro ao realizar saque", error, { context: "Payments" })
+
+      // DEBUG: Log full response to see validation errors
+      if (error.response) {
+        console.log("Status:", error.response.status)
+        console.log("Data:", JSON.stringify(error.response.data, null, 2))
+      }
+
+      const message =
+        error.response?.data?.message || "Não foi possível realizar o saque."
+      // If message is array (class-validator), join it
+      const displayMessage = Array.isArray(message)
+        ? message.join("\n")
+        : message
+
+      Alert.alert("Erro", displayMessage)
+      setIsLoading(false)
+    }
+  }, [fetchFinancialData, user, balance])
 
   const handleSuccessFinish = useCallback(() => {
     setShowSuccess(false)
@@ -158,27 +195,33 @@ export default function Payments() {
     })
   }, [transactions, selectedFilter])
 
-  const renderPaymentItem = useCallback(({ item }: any) => (
-    <ListItemPayments
-      item={{
-        id: item.id,
-        type: item.tipo as "entrada" | "saida",
-        value: item.valor,
-        description: item.descricao,
-        date: item.data,
-      }}
-    />
-  ), [])
+  const renderPaymentItem = useCallback(
+    ({ item }: any) => (
+      <ListItemPayments
+        item={{
+          id: item.id,
+          type: item.tipo as "entrada" | "saida",
+          value: item.valor,
+          description: item.descricao,
+          date: item.data,
+        }}
+      />
+    ),
+    []
+  )
 
   const keyExtractor = useCallback((item: any) => item.id, [])
 
   const ItemSeparator = useCallback(() => <View style={styles.separator} />, [])
 
-  const ListEmpty = useCallback(() => (
-    <Text style={styles.emptyText}>
-      {isFetching ? "Carregando..." : "Nenhuma transação encontrada."}
-    </Text>
-  ), [isFetching])
+  const ListEmpty = useCallback(
+    () => (
+      <Text style={styles.emptyText}>
+        {isFetching ? "Carregando..." : "Nenhuma transação encontrada."}
+      </Text>
+    ),
+    [isFetching]
+  )
 
   if (isLoading) {
     return <LoadingWithdraw />
@@ -193,7 +236,7 @@ export default function Payments() {
     )
   }
 
-  const formattedBalance = `R$ ${balance.toFixed(2).replace('.', ',')}`
+  const formattedBalance = `R$ ${balance.toFixed(2).replace(".", ",")}`
 
   return (
     <SafeAreaView style={styles.container}>
@@ -225,7 +268,11 @@ export default function Payments() {
               setIsConfirmationModalVisible(true)
             }}
           >
-            <MaterialIcons name="arrow-circle-down" size={18} color={colors.primary} />
+            <MaterialIcons
+              name="arrow-circle-down"
+              size={18}
+              color={colors.primary}
+            />
             <Text style={styles.withdrawText}>Sacar</Text>
           </Pressable>
         </View>
@@ -307,7 +354,7 @@ export default function Payments() {
               title="Confirmar Saque"
               message={`Deseja transferir ${formattedBalance} para sua chave PIX?`}
               onConfirm={() => {
-                handleConfirmPayment({ value: formattedBalance })
+                handleConfirmPayment()
                 setIsConfirmationModalVisible(false)
               }}
               onCancel={() => {
