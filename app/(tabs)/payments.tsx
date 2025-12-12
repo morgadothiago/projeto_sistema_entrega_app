@@ -87,6 +87,8 @@ export default function Payments() {
         `/deliveryman/${user.id}/balance`
       )
 
+      console.log("Dados financeiros", balanceData)
+
       setBalance(balanceData.currentBalance)
       setTransactions(
         balanceData.transactions.map((item) => ({
