@@ -1,9 +1,13 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "entregador-app",
+    "slug": "entregador-app",
+    "owner": "thiago_morgado",
     "version": "1.0.0",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "orientation": "portrait",
     "icon": "./app/assets/icon.png",
     "splash": {
@@ -12,18 +16,18 @@
       "backgroundColor": "#0057FF"
     },
     "backgroundColor": "#0057FF",
-    "scheme": "mobile",
+    "scheme": "entregador",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.thiago-morgado.mobile",
+      "bundleIdentifier": "com.thiago-morgado.entregador",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.thiagomorgado.mobile",
+      "package": "com.thiagomorgado.entregador",
       "adaptiveIcon": {
         "foregroundImage": "./app/assets/android-icon-foreground.png",
         "backgroundImage": "./app/assets/android-icon-foreground.png",
@@ -68,7 +72,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "93a9a5d3-bc84-44c4-afa6-c6edb3d5eafa"
+        "projectId": "88c7717f-f0c8-4f10-9062-05720523cb8b"
       }
     }
   }

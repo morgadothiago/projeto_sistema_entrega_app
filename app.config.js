@@ -1,8 +1,9 @@
 export default ({ config }) => ({
   ...config,
   expo: {
-    name: "Sistema de Entregas",
-    slug: "mobile",
+    name: "entregador-app",
+    slug: "entregador-app",
+    owner: "thiago_morgado",
     version: "1.0.0",
     platforms: ["ios", "android"],
     orientation: "portrait",
@@ -23,7 +24,7 @@ export default ({ config }) => ({
 
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.thiago-morgado.mobile",
+      bundleIdentifier: "com.thiago_morgado.entregador",
       buildNumber: "1",
       infoPlist: {
         // Encryption
@@ -53,7 +54,7 @@ export default ({ config }) => ({
     },
 
     android: {
-      package: "com.thiagomorgado.mobile",
+      package: "com.thiago_morgado.entregador",
       versionCode: 1,
       adaptiveIcon: {
         foregroundImage: "./app/assets/android-icon-foreground.png",
@@ -114,7 +115,7 @@ export default ({ config }) => ({
     extra: {
       router: {},
       eas: {
-        projectId: "93a9a5d3-bc84-44c4-afa6-c6edb3d5eafa"
+        projectId: "88c7717f-f0c8-4f10-9062-05720523cb8b"
       },
       // Environment variables
       apiUrl: process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000",
