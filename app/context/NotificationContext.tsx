@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from "react"
 import Toast from "react-native-toast-message"
+import * as Notifications from "expo-notifications"
 
 interface Notification {
     id: string
@@ -54,9 +55,44 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             text2: message,
             position: "top",
             visibilityTime: 3000,
-
         })
     }
+
+    // Expo Notifications Integration
+    React.useEffect(() => {
+        let isMounted = true;
+
+        const setupNotifications = async () => {
+            const { status: existingStatus } = await Notifications.getPermissionsAsync();
+            let finalStatus = existingStatus;
+
+            if (existingStatus !== 'granted') {
+                const { status } = await Notifications.requestPermissionsAsync();
+                finalStatus = status;
+            }
+
+            if (finalStatus !== 'granted') {
+                console.log('Failed to get push token for push notification!');
+                return;
+            }
+        };
+
+        setupNotifications();
+
+        return () => { isMounted = false };
+    }, []);
+
+    // Sync Badge Count
+    React.useEffect(() => {
+        const updateBadge = async () => {
+            try {
+                await Notifications.setBadgeCountAsync(unreadCount);
+            } catch (error) {
+                console.log("Error setting badge count:", error);
+            }
+        };
+        updateBadge();
+    }, [unreadCount]);
 
     // Simulate receiving notifications for demo
     // useEffect(() => {

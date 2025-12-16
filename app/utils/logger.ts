@@ -9,6 +9,7 @@ type LogLevel = 'log' | 'info' | 'warn' | 'error' | 'debug';
 interface LoggerOptions {
   context?: string;
   data?: any;
+  [key: string]: any;
 }
 
 class Logger {

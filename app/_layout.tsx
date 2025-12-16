@@ -10,6 +10,17 @@ import Logo from "./assets/logo.png"
 import Loading from "./components/Loading"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { NotificationProvider } from "./context/NotificationContext"
+import * as Notifications from "expo-notifications"
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+})
 
 function InitialLayout() {
   const { loading } = useAuth()

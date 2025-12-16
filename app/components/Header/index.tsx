@@ -12,6 +12,7 @@ type HeaderProps = {
   tabsTitle?: string
   onNotificationPress?: () => void
   showNotifications?: boolean
+  showNotificationBadge?: boolean
 }
 
 export function Header({
@@ -20,9 +21,11 @@ export function Header({
   tabs,
   tabsTitle,
   onNotificationPress,
-  showNotifications = true
+  showNotifications = true,
+  showNotificationBadge
 }: HeaderProps) {
   const { unreadCount } = useNotifications()
+  const displayNotifications = showNotificationBadge ?? showNotifications
 
   return (
     <View style={[styles.container, tabs && styles.tabs]}>
@@ -42,7 +45,7 @@ export function Header({
         {tabs ? tabsTitle : title}
       </Text>
 
-      {showNotifications && onNotificationPress && (
+      {displayNotifications && onNotificationPress && (
         <TouchableOpacity
           style={styles.notificationButton}
           onPress={onNotificationPress}
