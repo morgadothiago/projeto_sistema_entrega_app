@@ -7,7 +7,7 @@ interface DeliveryCardProps {
   item: DeliveryItem;
 }
 
-const DeliveryCard: React.FC<DeliveryCardProps> = ({ item }) => {
+const DeliveryCard: React.FC<DeliveryCardProps> = React.memo(({ item }) => {
   const getStatusColor = (status: DeliveryItem['status']) => {
     switch (status) {
       case 'completed':
@@ -32,7 +32,7 @@ const DeliveryCard: React.FC<DeliveryCardProps> = ({ item }) => {
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   deliveryCard: {

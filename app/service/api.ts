@@ -75,8 +75,7 @@ console.log("🔧 Is Device:", Constants.isDevice)
 
 // -------------------- INSTÂNCIA AXIOS --------------------
 const api = Axios.create({
-  baseURL: "http://localhost:3000",
-  // baseURL: "http://localhost
+  baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
     "User-Agent": "IEMobile",
@@ -358,23 +357,15 @@ api.interceptors.response.use(
 
 export { api }
 
-export async function createPaymentInfo(data: any) {
+
+
+export async function updatePushToken(userId: number, token: string) {
   try {
-    const response = await api.post("/payment-info", data)
-
-    Toast.show({
-      type: "success",
-      text1: "Sucesso!",
-      text2: "Informações de pagamento salvas com sucesso!",
-    })
-
+    const response = await api.patch(`/users/${userId}/push-token`, { pushToken: token })
+    console.log("✅ Push token atualizado com sucesso!")
     return response.data
   } catch (error: any) {
-    Toast.show({
-      type: "error",
-      text1: "Erro ao salvar informações de pagamento",
-      text2: error.response?.data?.message || "Verifique os dados enviados.",
-    })
-    throw error
+    console.error("❌ Erro ao atualizar push token:", error.message)
+    // Não mostra toast para não incomodar o usuário, apenas loga
   }
 }

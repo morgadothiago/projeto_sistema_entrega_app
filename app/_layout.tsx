@@ -8,6 +8,7 @@ import FundoLogo from "./assets/funndo.png"
 import LoadingAnimation from "./assets/Loading.json"
 import Logo from "./assets/logo.png"
 import Loading from "./components/Loading"
+import ErrorBoundary from "./components/ErrorBoundary"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { NotificationProvider } from "./context/NotificationContext"
 import * as Notifications from "expo-notifications"
@@ -52,13 +53,15 @@ function InitialLayout() {
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <NotificationProvider>
-          <InitialLayout />
-        </NotificationProvider>
-      </AuthProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <NotificationProvider>
+            <InitialLayout />
+          </NotificationProvider>
+        </AuthProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   )
 }
 

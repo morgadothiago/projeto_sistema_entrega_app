@@ -105,6 +105,28 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             } catch (error) {
                 console.log("Error setting notification channel:", error);
             }
+
+            // Sync with Backend if user is logged in
+            try {
+                const { getItem } = require("../helpers/Storage");
+                const { STORAGE_KEYS } = require("../utils/constants");
+                const { updatePushToken } = require("../service/api");
+
+                const userJson = await getItem(STORAGE_KEYS.USER);
+                if (userJson) {
+                    const user = JSON.parse(userJson);
+                    const tokenData = await Notifications.getExpoPushTokenAsync({
+                        projectId: "88c7717f-f0c8-4f10-9062-05720523cb8b"
+                    });
+
+                    if (user?.id && tokenData?.data) {
+                        console.log(`Sending token for user ${user.id}...`);
+                        await updatePushToken(user.id, tokenData.data);
+                    }
+                }
+            } catch (error) {
+                console.log("Error syncing token with backend:", error);
+            }
         };
 
         setupNotifications();

@@ -9,7 +9,7 @@ interface QuickActionButtonProps {
   color: string
 }
 
-export default function QuickActionButton({
+const QuickActionButton = React.memo(function QuickActionButton({
   icon,
   title,
   onPress,
@@ -29,7 +29,9 @@ export default function QuickActionButton({
       </Text>
     </TouchableOpacity>
   )
-}
+});
+
+export default QuickActionButton;
 
 const styles = StyleSheet.create({
   container: {

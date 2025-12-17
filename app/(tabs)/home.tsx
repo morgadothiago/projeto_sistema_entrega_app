@@ -266,7 +266,7 @@ export default function Home() {
       }, 5 * 60 * 1000)
 
       return () => clearInterval(timer)
-    }, [user?.id, token])
+    }, [user?.id, token, init])
   )
 
   const handleRefresh = async () => {

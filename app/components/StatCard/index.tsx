@@ -10,7 +10,7 @@ interface StatCardProps {
   color: string
 }
 
-export default function StatCard({
+const StatCard = React.memo(function StatCard({
   icon,
   title,
   value,
@@ -29,7 +29,9 @@ export default function StatCard({
       </View>
     </View>
   )
-}
+});
+
+export default StatCard;
 
 const styles = StyleSheet.create({
   container: {

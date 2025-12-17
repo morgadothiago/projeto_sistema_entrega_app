@@ -1,3 +1,9 @@
+/**
+ * @deprecated Use UserWrapper from '../UserWrapper' instead
+ * Este componente está deprecado e será removido em versões futuras.
+ * Use o componente UserWrapper que tem mais funcionalidades.
+ */
+
 import { colors } from "@/app/theme"
 import { ApiResponse } from "@/app/types/ApiResponse"
 import React from "react"
@@ -14,6 +20,9 @@ interface UserWarpperProps {
   avatarSource?: ImageSourcePropType
 }
 
+/**
+ * @deprecated Use UserWrapper instead
+ */
 export default function UserWarpper({
   deliveryMan,
   avatarSource,
