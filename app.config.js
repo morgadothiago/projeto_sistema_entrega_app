@@ -123,14 +123,7 @@ export default ({ config }) => ({
       viaCepApiUrl: process.env.EXPO_PUBLIC_VIA_CEP_API_URL || "https://viacep.com.br/ws"
     },
 
-    updates: {
-      fallbackToCacheTimeout: 0,
-      url: "https://u.expo.dev/93a9a5d3-bc84-44c4-afa6-c6edb3d5eafa"
-    },
 
-    runtimeVersion: {
-      policy: "appVersion"
-    },
 
     assetBundlePatterns: [
       "**/*"
