@@ -19,9 +19,12 @@
     "scheme": "entregador",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.thiago-morgado.entregador",
+      "bundleIdentifier": "com.thiagomorgado.entregador",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -35,7 +38,16 @@
         "backgroundColor": "#0057FF"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES"
+      ]
     },
     "plugins": [
       "expo-router",

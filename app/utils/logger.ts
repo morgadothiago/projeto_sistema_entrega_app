@@ -82,7 +82,7 @@ class Logger {
       // Sentry.captureException(error, {
       //   extra: { message, ...options }
       // });
-      console.error(formattedMessage);
+      // console.error(formattedMessage);
     }
   }
 

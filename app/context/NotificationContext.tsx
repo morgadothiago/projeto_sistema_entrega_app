@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from "react"
+import { Platform } from "react-native"
 import Toast from "react-native-toast-message"
 import * as Notifications from "expo-notifications"
 
@@ -58,6 +59,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         })
     }
 
+    const notificationListener = React.useRef<Notifications.Subscription | null>(null);
+    const responseListener = React.useRef<Notifications.Subscription | null>(null);
+
     // Expo Notifications Integration
     React.useEffect(() => {
         let isMounted = true;
@@ -75,11 +79,57 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 console.log('Failed to get push token for push notification!');
                 return;
             }
+
+            // Get the token
+            try {
+                const tokenData = await Notifications.getExpoPushTokenAsync({
+                    projectId: "88c7717f-f0c8-4f10-9062-05720523cb8b" // ID do projeto obtido do app.json/eas.json
+                });
+                console.log("📢 EXPO PUSH TOKEN:", tokenData.data);
+            } catch (error) {
+                console.log("Error fetching push token:", error);
+            }
+
+            // Android Channel Configuration
+            try {
+                // Defensive check and logging
+                console.log("Checking Platform:", Platform);
+                if (Platform?.OS === 'android') {
+                    await Notifications.setNotificationChannelAsync('default', {
+                        name: 'default',
+                        importance: Notifications.AndroidImportance.MAX,
+                        vibrationPattern: [0, 250, 250, 250],
+                        lightColor: '#FF231F7C',
+                    });
+                }
+            } catch (error) {
+                console.log("Error setting notification channel:", error);
+            }
         };
 
         setupNotifications();
 
-        return () => { isMounted = false };
+        // Listener for foreground notifications
+        notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+            console.log("🔔 Notification Received in Foreground:", notification);
+            const { title, body } = notification.request.content;
+            if (title && body) {
+                // Update local state smoothly
+                addNotification(title, body);
+            }
+        });
+
+        // Listener for interaction (user tapped notification)
+        responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+            console.log("👆 Notification Tapped:", response);
+            // Here you can handle navigation based on data
+        });
+
+        return () => {
+            isMounted = false;
+            notificationListener.current?.remove();
+            responseListener.current?.remove();
+        };
     }, []);
 
     // Sync Badge Count
