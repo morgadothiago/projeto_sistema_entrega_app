@@ -87,8 +87,6 @@ export default function Payments() {
         `/deliveryman/${user.id}/balance`
       )
 
-      console.log("Dados financeiros", balanceData)
-
       setBalance(balanceData.currentBalance)
       setTransactions(
         balanceData.transactions.map((item) => ({
@@ -165,12 +163,6 @@ export default function Payments() {
       fetchFinancialData()
     } catch (error: any) {
       logger.error("Erro ao realizar saque", error, { context: "Payments" })
-
-      // DEBUG: Log full response to see validation errors
-      if (error.response) {
-        console.log("Status:", error.response.status)
-        console.log("Data:", JSON.stringify(error.response.data, null, 2))
-      }
 
       const message =
         error.response?.data?.message || "Não foi possível realizar o saque."

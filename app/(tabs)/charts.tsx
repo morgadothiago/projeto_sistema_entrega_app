@@ -151,8 +151,6 @@ export default function Charts() {
         return acc + (isNaN(val) ? 0 : val);
       }, 0)
 
-    console.log("📊 [Charts] Stats Calculated:", { total, completed, pending, earnings, itemsSample: items.slice(0, 2).map(i => ({ id: i.id, status: i.status })) })
-
     setStats({
       total,
       completed,
@@ -177,18 +175,12 @@ export default function Charts() {
 
       let orders: ApiOrder[] = response.data.data || [] // Garantir que é array
 
-      console.log("📦 [Charts] Raw orders count:", orders.length)
-      if (orders.length > 0) {
-        console.log("📦 [Charts] First order sample:", JSON.stringify(orders[0], null, 2))
-      }
-
       // Tentar filtrar pelo ID do entregador se a API retornar esse campo
       // Isso atende à solicitação: "entregas tem que ser relacionada a o deliveryman"
       // Se não tiver o campo, mostramos todas (assumindo que o endpoint já filtra ou retorna pool aberto)
       const hasDeliverymanInfo = orders.some((o: any) => o.deliverymanId)
 
       if (hasDeliverymanInfo) {
-        console.log("🔍 [Charts] Filtrando por deliverymanId:", user.id)
         orders = orders.filter((o: any) => o.deliverymanId === user.id || o.deliverymanId === Number(user.id))
       }
 

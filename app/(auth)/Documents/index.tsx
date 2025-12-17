@@ -163,13 +163,9 @@ export default function Documents() {
         formData.append("cnhType", data.cnhType)
       }
 
-      console.log("📤 Enviando documento para API...")
-
       const response = await api.post("/deliveryman/documents", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       })
-
-      console.log("✅ Documento enviado com sucesso:", response.data)
 
       setSubmittedData(data)
       setIsSubmitting(false)
@@ -181,10 +177,6 @@ export default function Documents() {
         text2: "Documento enviado com sucesso 👌",
       })
     } catch (error: any) {
-      console.log("❌ Erro ao enviar documento:", error)
-      console.log("❌ Resposta da API:", error.response?.data)
-      console.log("❌ Status:", error.response?.status)
-
       setIsSubmitting(false)
 
       const errorMessage =
@@ -202,7 +194,6 @@ export default function Documents() {
   }
 
   const onErrors = (errors: any) => {
-    console.log("Validation Errors:", errors)
     const errorMessages = Object.values(errors)
       .map((error: any) => error.message)
       .join("\n")

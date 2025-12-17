@@ -76,7 +76,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             }
 
             if (finalStatus !== 'granted') {
-                console.log('Failed to get push token for push notification!');
                 return;
             }
 
@@ -85,15 +84,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 const tokenData = await Notifications.getExpoPushTokenAsync({
                     projectId: "88c7717f-f0c8-4f10-9062-05720523cb8b" // ID do projeto obtido do app.json/eas.json
                 });
-                console.log("📢 EXPO PUSH TOKEN:", tokenData.data);
             } catch (error) {
-                console.log("Error fetching push token:", error);
+                // Token fetch error
             }
 
             // Android Channel Configuration
             try {
-                // Defensive check and logging
-                console.log("Checking Platform:", Platform);
                 if (Platform?.OS === 'android') {
                     await Notifications.setNotificationChannelAsync('default', {
                         name: 'default',
@@ -103,7 +99,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                     });
                 }
             } catch (error) {
-                console.log("Error setting notification channel:", error);
+                // Channel setup error
             }
 
             // Sync with Backend if user is logged in
@@ -120,12 +116,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                     });
 
                     if (user?.id && tokenData?.data) {
-                        console.log(`Sending token for user ${user.id}...`);
                         await updatePushToken(user.id, tokenData.data);
                     }
                 }
             } catch (error) {
-                console.log("Error syncing token with backend:", error);
+                // Backend sync error
             }
         };
 
@@ -133,7 +128,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
         // Listener for foreground notifications
         notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-            console.log("🔔 Notification Received in Foreground:", notification);
             const { title, body } = notification.request.content;
             if (title && body) {
                 // Update local state smoothly
@@ -143,7 +137,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
         // Listener for interaction (user tapped notification)
         responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-            console.log("👆 Notification Tapped:", response);
             // Here you can handle navigation based on data
         });
 
@@ -160,7 +153,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             try {
                 await Notifications.setBadgeCountAsync(unreadCount);
             } catch (error) {
-                console.log("Error setting badge count:", error);
+                // Badge count error
             }
         };
         updateBadge();

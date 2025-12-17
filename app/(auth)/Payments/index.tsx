@@ -114,7 +114,6 @@ export default function Payments() {
     (pixKey: string) => {
       if (!pixKey || pixKey.trim() === "") {
         setValue("pixKeyType", "")
-        console.log("🔑 Tipo de chave: Nenhuma chave inserida")
         return
       }
 
@@ -122,10 +121,8 @@ export default function Payments() {
 
       if (detectedType) {
         setValue("pixKeyType", detectedType)
-        console.log(`🔑 ${getPixKeyTypeDescription(detectedType)} - ${pixKey}`)
       } else {
         setValue("pixKeyType", "")
-        console.log("🔑 Tipo de chave não identificado")
       }
     },
     [setValue]
@@ -164,12 +161,10 @@ export default function Payments() {
       setValue("accountType", undefined)
       setValue("holderName", "")
       setValue("cpf", "")
-      console.log("🧹 Campos de Transferência limpos")
     } else if (paymentType === "Transferencia") {
       // Limpa campos de Pix
       setValue("pixKey", "")
       setValue("pixKeyType", "")
-      console.log("🧹 Campos de Pix limpos")
     }
   }, [paymentType, setValue])
 
@@ -217,15 +212,6 @@ export default function Payments() {
           pixKey: cleanPixKey,
           pixKeyType: data.pixKeyType,
         }
-
-        console.log("\n🔑 TIPO DE PAGAMENTO: PIX")
-        console.log("\n📊 Processamento da Chave Pix:")
-        console.log("  🎭 Chave com máscara (digitada):", data.pixKey)
-        console.log("  💾 Chave sem máscara (limpa):", cleanPixKey)
-        console.log("  🏷️  Detected Type:", data.pixKeyType)
-        console.log("\n📤 Dados que serão enviados para API:")
-        console.log(JSON.stringify(dataToSend, null, 2))
-        console.log("\n" + "=".repeat(60) + "\n")
       } else if (data.paymentType === "Transferencia") {
         // Validação: Se for Transferência, garantir que os campos obrigatórios existem
         if (
@@ -255,40 +241,9 @@ export default function Payments() {
           holderName: data.holderName,
           cpf: cleanCpf,
         }
-
-        console.log("\n🏦 TIPO DE PAGAMENTO: TRANSFERÊNCIA BANCÁRIA")
-        console.log("\n📊 Dados Bancários:")
-        console.log("  🏦 Código do Banco:", data.bankCode || "N/A")
-        console.log("  🏛️  Nome do Banco:", data.bankName)
-        console.log(
-          "  🔢 Agência:",
-          data.agency + (data.agencyDigit ? `-${data.agencyDigit}` : "")
-        )
-        console.log(
-          "  💳 Conta:",
-          data.account + (data.accountDigit ? `-${data.accountDigit}` : "")
-        )
-        console.log("  📋 Tipo de Conta:", data.accountType)
-        console.log("\n👤 Dados do Titular:")
-        console.log("  📝 Nome:", data.holderName)
-        console.log("  🆔 CPF (com máscara):", data.cpf)
-        console.log("  ✅ CPF (sem máscara):", cleanCpf)
-        console.log("\n⚠️  ATENÇÃO: Dados de Pix NÃO serão enviados:")
-        console.log("  ❌ pixKey: NÃO incluído")
-        console.log("  ❌ pixKeyType: NÃO incluído")
-        console.log(
-          "\n📤 Dados que serão enviados para API (APENAS Transferência):"
-        )
-        console.log(JSON.stringify(dataToSend, null, 2))
-        console.log(
-          "\n✅ Confirmação: Objeto contém apenas dados bancários, SEM Pix"
-        )
-        console.log("\n" + "=".repeat(60) + "\n")
       } else {
         throw new Error("Tipo de pagamento não selecionado")
       }
-
-      console.log("⏳ Validação concluída. Enviando para API...")
 
       // Aqui você faria a chamada real para a API
       if (dataToSend) {
@@ -301,7 +256,6 @@ export default function Payments() {
             },
           }
         )
-        console.log("✅ Resposta da API:", response.data)
 
         Toast.show({
           type: "success",
@@ -313,17 +267,12 @@ export default function Payments() {
       setSubmittedData(dataToSend as any)
       setIsSubmitting(false)
 
-      console.log("\n" + "=".repeat(60) + "\n")
-
       // Mostra tela de sucesso
       setShowSuccess(true)
 
       router.push("/(auth)/Signin")
     } catch (error: any) {
       setIsSubmitting(false)
-
-      console.log("❌ Erro ao salvar:", error)
-      console.log("❌ Resposta da API:", error.response?.data)
 
       const errorMessage =
         error.response?.data?.message ||

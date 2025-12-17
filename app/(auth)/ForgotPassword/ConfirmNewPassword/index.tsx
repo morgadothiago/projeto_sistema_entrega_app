@@ -65,8 +65,6 @@ export default function ConfirmNewPassword() {
     Keyboard.dismiss()
 
     try {
-      console.log(data)
-
       if (data.newPassword !== data.confirmPassword) {
         Toast.show({
           type: "error",

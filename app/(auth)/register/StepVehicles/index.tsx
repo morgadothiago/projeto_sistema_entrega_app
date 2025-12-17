@@ -129,9 +129,6 @@ export default function VehiclesInfo() {
       delete dataToSave.model
       delete dataToSave.year
       delete dataToSave.color
-    } else {
-      console.log("📤 Placa enviada SEM máscara:", dataToSave.licensePlate)
-      console.log("✅ Formato limpo (apenas letras e números):", dataToSave.licensePlate)
     }
 
     setUserInfo(dataToSave)

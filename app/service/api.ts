@@ -52,7 +52,7 @@ const getBaseURL = (): string => {
     // Android Físico usa o IP da máquina na rede local
     return isDevice
       ? `http://${PHYSICAL_DEVICE_IP}:3000`
-      : "http://10.0.2.2:3000"
+      : process.env.EXPO_BASE_URL || "http://10.0.2.2:3000"
   }
 
   if (Platform.OS === "ios") {
@@ -68,10 +68,6 @@ const getBaseURL = (): string => {
 }
 
 const BASE_URL = getBaseURL()
-
-console.log("🌐 API Base URL:", BASE_URL)
-console.log("📱 Platform:", Platform.OS)
-console.log("🔧 Is Device:", Constants.isDevice)
 
 // -------------------- INSTÂNCIA AXIOS --------------------
 const api = Axios.create({
@@ -362,10 +358,8 @@ export { api }
 export async function updatePushToken(userId: number, token: string) {
   try {
     const response = await api.patch(`/users/${userId}/push-token`, { pushToken: token })
-    console.log("✅ Push token atualizado com sucesso!")
     return response.data
   } catch (error: any) {
-    console.error("❌ Erro ao atualizar push token:", error.message)
-    // Não mostra toast para não incomodar o usuário, apenas loga
+    // Não mostra toast para não incomodar o usuário
   }
 }

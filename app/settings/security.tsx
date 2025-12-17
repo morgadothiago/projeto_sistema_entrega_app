@@ -41,7 +41,6 @@ export default function Security() {
     })
 
     const onSubmit = (data: any) => {
-        console.log(data)
         Alert.alert("Sucesso", "Senha alterada com sucesso!")
     }
 

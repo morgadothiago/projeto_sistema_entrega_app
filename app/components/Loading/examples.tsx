@@ -144,11 +144,11 @@ export function LoadingSuccess() {
  */
 export function LoadingError() {
   const handleRetry = () => {
-    console.log("Tentando novamente...")
+    // Retry logic here
   }
 
   const handleCancel = () => {
-    console.log("Cancelando...")
+    // Cancel logic here
   }
 
   return (
