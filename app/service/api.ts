@@ -18,58 +18,8 @@ interface LoginResponse {
   user: ApiResponse
 }
 
-// -------------------- CONFIGURAÇÃO DE BASE URL --------------------
-/**
- * Detecta automaticamente a baseURL correta baseado no ambiente:
- *
- * - Android Emulator: 10.0.2.2 (IP especial que aponta para localhost do host)
- * - iOS Simulator: localhost (compartilha a rede do host)
- * - Dispositivo Físico: IP da máquina na rede local (configurar manualmente)
- *
- * Para usar com dispositivo físico:
- * 1. Descubra o IP da sua máquina:
- *    - Mac/Linux: ifconfig | grep "inet " | grep -v 127.0.0.1
- *    - Windows: ipconfig
- * 2. Defina a variável de ambiente EXPO_PUBLIC_API_URL no arquivo .env
- * 3. Ou altere a constante PHYSICAL_DEVICE_IP abaixo
- */
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL
 
-// IP da sua máquina na rede local (para dispositivos físicos)
-// Altere este IP para o IP da sua máquina
-const PHYSICAL_DEVICE_IP = "192.168.15.1" // <- ALTERE AQUI
-
-const getBaseURL = (): string => {
-  // Se houver uma URL customizada no .env, use ela
-  if (Constants.expoConfig?.extra?.apiUrl) {
-    return Constants.expoConfig.extra.apiUrl
-  }
-
-  // Detecta se é um dispositivo físico ou emulador
-  const isDevice = Constants.isDevice
-
-  if (Platform.OS === "android") {
-    // Android Emulator usa 10.0.2.2 para acessar localhost do host
-    // Android Físico usa o IP da máquina na rede local
-    return isDevice
-      ? `http://${PHYSICAL_DEVICE_IP}:3000`
-      : process.env.EXPO_BASE_URL || "http://10.0.2.2:3000"
-  }
-
-  if (Platform.OS === "ios") {
-    // iOS Simulator pode usar localhost
-    // iOS Físico usa o IP da máquina na rede local
-    return isDevice
-      ? `http://${PHYSICAL_DEVICE_IP}:3000`
-      : "http://localhost:3000"
-  }
-
-  // Web ou outra plataforma
-  return "http://localhost:3000"
-}
-
-const BASE_URL = getBaseURL()
-
-// -------------------- INSTÂNCIA AXIOS --------------------
 const api = Axios.create({
   baseURL: BASE_URL,
   headers: {

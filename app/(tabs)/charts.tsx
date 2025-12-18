@@ -15,6 +15,7 @@ import {
   View,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
+import Toast from "react-native-toast-message"
 import DeliveryCard from "../components/DeliveryCard"
 import { Header } from "../components/Header"
 import AppPicker from "../components/Select"
@@ -201,7 +202,30 @@ export default function Charts() {
 
     } catch (err: any) {
       logger.error("Erro ao buscar entregas", err, { context: "Charts" })
-      setError("Não foi possível carregar os dados das entregas.")
+
+      // Tratamento específico para erro 404
+      if (err?.response?.status === 404) {
+        Toast.show({
+          type: "info",
+          text1: "Nenhuma entrega encontrada",
+          text2: "Não há entregas cadastradas no sistema ainda",
+          visibilityTime: 4000,
+        })
+        // Mantém listas vazias - app continua funcionando
+        setAllDeliveries([])
+        setFilteredDeliveries([])
+        calculateStats([])
+        setError(null) // Remove erro visual
+      } else {
+        // Outros erros
+        setError("Não foi possível carregar os dados das entregas.")
+        Toast.show({
+          type: "error",
+          text1: "Erro ao carregar entregas",
+          text2: err?.message || "Tente novamente mais tarde",
+          visibilityTime: 4000,
+        })
+      }
     } finally {
       setIsLoading(false)
       setRefreshing(false)

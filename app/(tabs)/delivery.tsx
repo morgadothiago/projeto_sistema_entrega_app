@@ -135,14 +135,27 @@ export default function Delivery() {
         context: "Delivery",
         data: { count: response.data.data?.length },
       })
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Erro ao buscar entregas", error, { context: "Delivery" })
 
-      Toast.show({
-        type: "error",
-        text1: "Erro",
-        text2: ERROR_MESSAGES.FETCH_DELIVERIES,
-      })
+      // Tratamento específico para erro 404
+      if (error?.response?.status === 404) {
+        Toast.show({
+          type: "info",
+          text1: "Nenhuma entrega disponível",
+          text2: "Não há entregas cadastradas no momento",
+          visibilityTime: 4000,
+        })
+        // Mantém lista vazia - app continua funcionando
+        setOrders([])
+      } else {
+        // Outros erros
+        Toast.show({
+          type: "error",
+          text1: "Erro",
+          text2: ERROR_MESSAGES.FETCH_DELIVERIES,
+        })
+      }
     } finally {
       setRefreshing(false)
     }
