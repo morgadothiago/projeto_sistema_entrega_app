@@ -28,6 +28,7 @@ import styles from "./styles"
 
 import LoadingAnimation from "@/app/assets/Loading.json"
 import { forgotPassword } from "@/app/service/api"
+import { getKeyboardBehavior } from "@/app/theme/androidOptimizations"
 
 interface ForgotPasswordData {
   email: string
@@ -89,8 +90,7 @@ export default function SendEmailForm() {
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+          behavior={getKeyboardBehavior()}
         >
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={{ flex: 1 }}>

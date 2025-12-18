@@ -29,6 +29,7 @@ import styles from "./styles"
 import LoadingAnimation from "@/app/assets/Loading.json"
 import { colors } from "@/app/theme"
 import { Feather } from "@expo/vector-icons"
+import { getKeyboardBehavior } from "@/app/theme/androidOptimizations"
 
 interface LoginData {
   email: string
@@ -110,7 +111,7 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={getKeyboardBehavior()}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ImageBackground

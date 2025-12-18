@@ -26,6 +26,7 @@ import styles from "./style"
 import LoadingAnimation from "@/app/assets/Loading.json"
 import Input from "@/app/components/Input"
 import { resetPassword } from "@/app/service/api"
+import { getKeyboardBehavior } from "@/app/theme/androidOptimizations"
 
 interface ConfirmNewPasswordData {
   newPassword: string
@@ -100,7 +101,7 @@ export default function ConfirmNewPassword() {
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior={getKeyboardBehavior()}
         >
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={{ flex: 1 }}>

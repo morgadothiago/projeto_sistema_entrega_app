@@ -10,6 +10,7 @@ import UserWrapper from "../components/UserWrapper"
 import { useAuth } from "../context/AuthContext"
 import { api } from "../service/api"
 import { colors } from "../theme"
+import { getElevation } from "../theme/elevations"
 import { ApiOrder } from "../types/order"
 import { logger } from "../utils/logger"
 
@@ -63,12 +64,13 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false)
   const [nextUpdateTime, setNextUpdateTime] = useState<Date | null>(null)
   const lastFetchRef = useRef<number>(0)
+  const rateLimitUntil = useRef<number>(0) // Bloqueia requisições até este timestamp
 
   const CACHE_KEY_USER = user?.id ? `@delivery_app:user_data:${user.id}` : null
   const CACHE_KEY_STATS = user?.id ? `@delivery_app:user_stats:${user.id}` : null
 
   // Função para carregar dados do usuário
-  const loadUserData = async (abortSignal?: AbortSignal) => {
+  const loadUserData = useCallback(async (abortSignal?: AbortSignal) => {
     if (token === null) {
       router.replace("/(auth)/Signin")
       return null
@@ -120,14 +122,30 @@ export default function Home() {
       return data
     } catch (error: any) {
       if (error.name === 'CanceledError') return null
+
+      // Tratamento especial para erro 429 - NÃO redirecionar
+      if (error?.response?.status === 429) {
+        // Bloqueia novas requisições por 2 minutos
+        rateLimitUntil.current = Date.now() + 120000
+        logger.warn("Rate limit 429 em loadUserData - bloqueando por 2 minutos", {
+          context: "Home",
+          data: { until: new Date(rateLimitUntil.current).toISOString() }
+        })
+        return null // Retorna null mas NÃO redireciona
+      }
+
       logger.error("Erro ao carregar usuário", error, { context: "Home" })
-      router.replace("/(auth)/Signin")
+
+      // Só redireciona para Signin em erros de autenticação (401, 403)
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
+        router.replace("/(auth)/Signin")
+      }
       return null
     }
-  }
+  }, [token, user?.id, CACHE_KEY_USER, router])
 
   // Função para estatísticas
-  const loadStats = async (abortSignal?: AbortSignal) => {
+  const loadStats = useCallback(async (abortSignal?: AbortSignal) => {
     if (!user?.id) return
 
     setIsLoadingStats(true)
@@ -168,8 +186,6 @@ export default function Home() {
       })
 
       // Salvar no cache com a data de hoje para reset automático
-      const todayDate = new Date().toDateString()
-      // Salvar no cache com a data de hoje para reset automático
       if (CACHE_KEY_STATS) {
         const todayDate = new Date().toDateString()
         await AsyncStorage.setItem(CACHE_KEY_STATS, JSON.stringify({
@@ -191,8 +207,15 @@ export default function Home() {
 
     } catch (error: any) {
       if (error.name === "CanceledError") return
+
       if (error.response?.status === 429) {
-        setStatsError("Muitas tentativas. Aguarde um pouco.")
+        // Bloqueia novas requisições por 2 minutos
+        rateLimitUntil.current = Date.now() + 120000
+        setStatsError("Muitas tentativas. Aguarde 2 minutos.")
+        logger.warn("Rate limit 429 em loadStats - bloqueando por 2 minutos", {
+          context: "Home",
+          data: { until: new Date(rateLimitUntil.current).toISOString() }
+        })
       } else {
         setStatsError("Não foi possível atualizar os dados")
       }
@@ -203,45 +226,58 @@ export default function Home() {
     } finally {
       setIsLoadingStats(false)
     }
-  }
+  }, [user?.id, CACHE_KEY_STATS])
 
-  const init = async () => {
-    // 1. Tentar carregar do cache primeiro (se não tiver dados)
-    if (!deliveryManData) {
-      try {
-        if (CACHE_KEY_USER && CACHE_KEY_STATS) {
-          const [cachedUser, cachedStats] = await Promise.all([
-            AsyncStorage.getItem(CACHE_KEY_USER),
-            AsyncStorage.getItem(CACHE_KEY_STATS)
-          ])
+  const init = useCallback(async () => {
+    // 1. SEMPRE carregar do cache primeiro - APP NUNCA PARA
+    try {
+      if (CACHE_KEY_USER && CACHE_KEY_STATS) {
+        const [cachedUser, cachedStats] = await Promise.all([
+          AsyncStorage.getItem(CACHE_KEY_USER),
+          AsyncStorage.getItem(CACHE_KEY_STATS)
+        ])
 
-          if (cachedUser) {
-            setDeliveryManData(JSON.parse(cachedUser))
-          }
+        if (cachedUser && !deliveryManData) {
+          setDeliveryManData(JSON.parse(cachedUser))
+          logger.info("Dados carregados do cache", { context: "Home" })
+        }
 
-          if (cachedStats) {
-            const parsedStats = JSON.parse(cachedStats)
-            const today = new Date().toDateString()
-
-            // Verifica se o cache é de hoje. Se não for, apaga (reset 24h)
-            if (parsedStats.date === today) {
-              setStats(parsedStats)
-            } else {
-              await AsyncStorage.removeItem(CACHE_KEY_STATS)
-            }
+        if (cachedStats) {
+          const parsedStats = JSON.parse(cachedStats)
+          // MUDANÇA: Aceita cache de qualquer dia se não tiver dados
+          if (!stats.completed && !stats.todayEarnings) {
+            setStats(parsedStats)
+            logger.info("Stats carregadas do cache", { context: "Home" })
           }
         }
-      } catch (e) {
-        // Ignora erro de leitura
       }
+    } catch (e) {
+      logger.warn("Erro ao ler cache", { context: "Home" })
     }
 
-    // 2. Otimização: Evita recarregar via API se já buscou há menos de 5s
-    if (deliveryManData && Date.now() - lastFetchRef.current < 5000) {
+    // 2. VERIFICAÇÃO: Se estamos bloqueados por rate limit, usar só cache
+    const now = Date.now()
+    if (now < rateLimitUntil.current) {
+      const waitTime = Math.ceil((rateLimitUntil.current - now) / 1000)
+      logger.warn("Rate limit ativo - usando cache", {
+        context: "Home",
+        data: { waitTimeSeconds: waitTime }
+      })
+      setIsLoading(false)
+      return // Para aqui, mas app continua funcionando com cache
+    }
+
+    // 3. Evita requisições muito frequentes
+    const timeSinceLastFetch = Date.now() - lastFetchRef.current
+    if (deliveryManData && timeSinceLastFetch < 60000) {
+      logger.info("Usando dados em memória", {
+        context: "Home",
+        data: { timeSinceLastFetch }
+      })
       return
     }
 
-    // 3. Buscar dados atualizados
+    // 4. Tentar atualizar com API (opcional - se falhar, app continua com cache)
     setIsLoading(true)
     const abortController = new AbortController()
     try {
@@ -250,26 +286,44 @@ export default function Home() {
         await loadStats(abortController.signal)
         lastFetchRef.current = Date.now()
       }
+    } catch (error: any) {
+      // Qualquer erro: app continua com cache
+      logger.info("API falhou - continuando com cache", {
+        context: "Home",
+        data: { error: error?.message }
+      })
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [deliveryManData, stats, CACHE_KEY_USER, CACHE_KEY_STATS, loadUserData, loadStats])
 
   useFocusEffect(
     useCallback(() => {
       init()
 
-      // Atualiza automaticamente a cada 5 minutos
-      const timer = setInterval(() => {
-        logger.info("Auto-refresh 5min disparado", { context: "Home" })
-        init()
-      }, 5 * 60 * 1000)
+      // AUTO-REFRESH DESABILITADO - Evita rate limit 429
+      // Usuário pode atualizar manualmente com pull-to-refresh
 
-      return () => clearInterval(timer)
-    }, [user?.id, token, init])
+      return () => {
+        // Cleanup se necessário
+      }
+    }, [init])
   )
 
   const handleRefresh = async () => {
+    // Verificar se estamos bloqueados por rate limit
+    const now = Date.now()
+    if (now < rateLimitUntil.current) {
+      const waitTime = Math.ceil((rateLimitUntil.current - now) / 1000)
+      logger.warn("Pull-to-refresh bloqueado por rate limit", {
+        context: "Home",
+        data: { waitTimeSeconds: waitTime }
+      })
+      setRefreshing(false)
+      // Não faz nada - mantém dados em cache
+      return
+    }
+
     setRefreshing(true)
     const abortController = new AbortController()
     try {
@@ -278,6 +332,12 @@ export default function Home() {
         await loadStats(abortController.signal)
         lastFetchRef.current = Date.now()
       }
+    } catch (error: any) {
+      // Qualquer erro: mantém cache, não quebra app
+      logger.info("Refresh falhou - mantendo cache", {
+        context: "Home",
+        data: { error: error?.message }
+      })
     } finally {
       setRefreshing(false)
     }
@@ -444,17 +504,11 @@ const styles = StyleSheet.create({
   },
   loadingCard: {
     backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 32,
+    borderRadius: 24,
+    padding: 40,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4.65,
-    elevation: 8,
+    marginHorizontal: 20,
+    ...getElevation('fab'),
   },
   loadingSpinner: {
     width: 60,
@@ -484,11 +538,13 @@ const styles = StyleSheet.create({
   },
   errorContainer: {
     backgroundColor: "#fef3c7",
-    borderLeftWidth: 4,
+    borderLeftWidth: 6,
     borderLeftColor: "#f59e0b",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    marginHorizontal: 4,
+    ...getElevation('surface'),
   },
   errorText: {
     fontSize: 14,

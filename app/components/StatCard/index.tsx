@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons"
 import React from "react"
 import { StyleSheet, Text, View } from "react-native"
+import { getElevation } from "@/app/theme/elevations"
 
 interface StatCardProps {
   icon: keyof typeof Ionicons.glyphMap
@@ -42,14 +43,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginVertical: 6,
     borderLeftWidth: 4,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    ...getElevation('card'),
   },
   iconContainer: {
     width: 56,

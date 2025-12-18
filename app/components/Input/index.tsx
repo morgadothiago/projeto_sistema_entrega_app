@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons"
-import React from "react"
+import React, { useMemo, useCallback } from "react"
 import {
   Control,
   Controller,
@@ -17,6 +17,7 @@ import {
   ViewStyle,
 } from "react-native"
 import { colors } from "../../theme"
+import { getElevation } from "@/app/theme/elevations"
 
 interface InputProps<TFieldValues extends FieldValues = FieldValues>
   extends TextInputProps {
@@ -49,6 +50,11 @@ export default function Input<TFieldValues extends FieldValues = FieldValues>({
   // Estado local para armazenar o valor com máscara visual
   const [displayValue, setDisplayValue] = React.useState("")
 
+  // Memoiza funções de máscara para evitar recriação em cada render
+  const memoizedMask = useMemo(() => mask, [mask]);
+  const memoizedVisualMask = useMemo(() => visualMask, [visualMask]);
+  const memoizedUnmask = useMemo(() => unmask, [unmask]);
+
   // Se control e name forem fornecidos, usa Controller
   if (control && name) {
     return (
@@ -69,21 +75,22 @@ export default function Input<TFieldValues extends FieldValues = FieldValues>({
             }
           }, [value])
 
-          const handleChangeText = (text: string) => {
-            if (visualMask && unmask) {
+          // useCallback para evitar recriação da função
+          const handleChangeText = useCallback((text: string) => {
+            if (memoizedVisualMask && memoizedUnmask) {
               // Mostra com máscara visual
-              setDisplayValue(visualMask(text))
+              setDisplayValue(memoizedVisualMask(text))
               // Salva sem máscara
-              onChange(unmask(text))
-            } else if (mask) {
+              onChange(memoizedUnmask(text))
+            } else if (memoizedMask) {
               // Aplica máscara e salva com máscara
-              const maskedValue = mask(text)
+              const maskedValue = memoizedMask(text)
               onChange(maskedValue)
             } else {
               // Sem máscara
               onChange(text)
             }
-          }
+          }, [memoizedMask, memoizedVisualMask, memoizedUnmask, onChange])
 
           return (
             <View>
@@ -144,6 +151,9 @@ export default function Input<TFieldValues extends FieldValues = FieldValues>({
   )
 }
 
+// Memoiza o estilo com elevation para evitar recálculos
+const elevationStyle = getElevation('surface');
+
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
@@ -153,6 +163,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginVertical: 5,
+    ...elevationStyle,
   },
   errorContainer: {
     borderWidth: 2,

@@ -28,6 +28,7 @@ import LottieView from "lottie-react-native"
 import LoadingAnimation from "@/app/assets/Loading.json"
 import Toast from "react-native-toast-message"
 import { Feather } from "@expo/vector-icons"
+import { getKeyboardBehavior } from "@/app/theme/androidOptimizations"
 import { colors } from "@/app/theme"
 
 type AddressType = {
@@ -132,7 +133,7 @@ export default function AddressInfo() {
 
           <KeyboardAvoidingView
             style={{ flex: 1 }}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior={getKeyboardBehavior()}
           >
             <ScrollView
               contentContainerStyle={styles.scrollContent}

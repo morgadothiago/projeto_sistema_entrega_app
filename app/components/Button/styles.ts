@@ -13,7 +13,7 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    elevation: 2,
+    // elevation aplicada via getElevation('elevated')
     marginVertical: 8,
   },
   default: {},

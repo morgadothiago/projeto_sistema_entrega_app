@@ -24,6 +24,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { styles } from "./styles"
 import LottieView from "lottie-react-native"
 import LoadingAnimation from "@/app/assets/Loading.json"
+import { getKeyboardBehavior } from "@/app/theme/androidOptimizations"
 
 type AccessFormData = {
   email: string
@@ -117,7 +118,7 @@ export default function AccessStep() {
 
           <KeyboardAvoidingView
             style={{ flex: 1 }}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior={getKeyboardBehavior()}
           >
             <ScrollView
               contentContainerStyle={styles.scrollContent}

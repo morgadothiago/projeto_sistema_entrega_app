@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { DeliveryItem } from "@/app/mocks/deliveriesData";
 import { colors } from "@/app/theme";
+import { getElevation } from "@/app/theme/elevations";
 
 interface DeliveryCardProps {
   item: DeliveryItem;
@@ -40,11 +41,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 15,
     marginBottom: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    ...getElevation('card'),
   },
   deliveryDescription: {
     fontSize: 16,

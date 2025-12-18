@@ -22,6 +22,7 @@ import { useAuth } from "../context/AuthContext"
 import { DeliveryItem } from "../mocks/deliveriesData"
 import { api } from "../service/api"
 import { colors } from "../theme"
+import { getElevation } from "../theme/elevations"
 import { ApiOrder } from "../types/order"
 import { logger } from "../utils/logger"
 
@@ -500,13 +501,12 @@ const styles = StyleSheet.create({
   },
   highlightCard: {
     backgroundColor: "#fff",
-    borderRadius: 24,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    borderRadius: 28,
+    padding: 24,
+    marginHorizontal: 4,
+    borderTopWidth: 4,
+    borderTopColor: colors.active,
+    ...getElevation('elevated'),
   },
   highlightHeader: {
     flexDirection: "row",
@@ -587,10 +587,11 @@ const styles = StyleSheet.create({
   insightCard: {
     flex: 1,
     borderRadius: 20,
-    padding: 16,
+    padding: 20,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 120,
+    minHeight: 130,
+    ...getElevation('card'),
   },
   insightIconContainer: {
     width: 40,
@@ -617,13 +618,10 @@ const styles = StyleSheet.create({
   },
   filterCard: {
     backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 3,
+    borderRadius: 20,
+    padding: 20,
+    marginHorizontal: 4,
+    ...getElevation('card'),
   },
   filterHeader: {
     flexDirection: "row",
@@ -681,12 +679,11 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
-    padding: 40,
+    padding: 48,
     backgroundColor: "#fff",
-    borderRadius: 16,
-    borderStyle: "dashed",
-    borderWidth: 2,
-    borderColor: "#e5e7eb",
+    borderRadius: 20,
+    marginHorizontal: 4,
+    ...getElevation('surface'),
   },
   emptyIcon: {
     fontSize: 40,
@@ -714,10 +711,13 @@ const styles = StyleSheet.create({
   },
   loadMoreButton: {
     marginTop: 8,
-    padding: 14,
-    backgroundColor: "rgba(0, 0, 0, 0.05)",
-    borderRadius: 12,
+    padding: 16,
+    backgroundColor: "#fff",
+    borderRadius: 16,
     alignItems: "center",
+    borderWidth: 2,
+    borderColor: colors.buttons,
+    ...getElevation('surface'),
   },
   loadMoreButtonText: {
     color: colors.text,

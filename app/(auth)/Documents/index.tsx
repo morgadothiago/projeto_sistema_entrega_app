@@ -28,6 +28,7 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import Toast from "react-native-toast-message"
+import { getKeyboardBehavior } from "@/app/theme/androidOptimizations"
 import * as yup from "yup"
 
 import LoadingDocument from "./LoadingDocument"
@@ -220,7 +221,7 @@ export default function Documents() {
 
           <KeyboardAvoidingView
             style={{ flex: 1 }}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior={getKeyboardBehavior()}
           >
             <ScrollView
               contentContainerStyle={styles.scrollContent}

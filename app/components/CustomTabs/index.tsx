@@ -1,7 +1,7 @@
 import { colors } from "@/app/theme"
 import { Feather } from "@expo/vector-icons"
 import React from "react"
-import { Animated, Text, TouchableOpacity, View } from "react-native"
+import { Animated, Platform, Text, TouchableOpacity, View } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { styles } from "./styles"
 
@@ -32,8 +32,13 @@ export function CustomTabs({ state, navigation }: CustomTabBarProps) {
     return null
   }
 
+  const paddingBottom = Platform.select({
+    ios: Math.max(insets.bottom, 8),
+    android: 8,
+  })
+
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+    <View style={[styles.container, { paddingBottom }]}>
       <View style={styles.tabsRow}>
         {tabs.map((tab) => {
           const route = state.routes.find(
@@ -58,7 +63,7 @@ export function CustomTabs({ state, navigation }: CustomTabBarProps) {
                 navigation.navigate(tab.name)
               }
             } catch (error) {
-              console.error("Navigation error:", error)
+              // Navigation error silently ignored
             }
           }
 

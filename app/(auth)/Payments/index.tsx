@@ -36,6 +36,7 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import Toast from "react-native-toast-message"
+import { getKeyboardBehavior } from "@/app/theme/androidOptimizations"
 import LoadingPaymentSuccess from "./LoadingPaymentSuccess"
 
 // Tipos para os dados enviados à API
@@ -327,7 +328,7 @@ export default function Payments() {
 
           <KeyboardAvoidingView
             style={{ flex: 1 }}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior={getKeyboardBehavior()}
           >
             <ScrollView
               contentContainerStyle={styles.scrollContent}

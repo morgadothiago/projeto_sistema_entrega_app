@@ -25,6 +25,7 @@ import Input from "@/app/components/Input"
 import { cpfMask, dateMask, phoneMask, removeNonNumeric } from "@/app/helpers"
 import { RegisterFormData } from "@/app/types/UserData"
 import LottieView from "lottie-react-native"
+import { getKeyboardBehavior } from "@/app/theme/androidOptimizations"
 
 export default function UserInfo() {
   const { userInfo, setUserInfo } = useMultiStep()
@@ -77,7 +78,7 @@ export default function UserInfo() {
 
           <KeyboardAvoidingView
             style={{ flex: 1 }}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior={getKeyboardBehavior()}
           >
             <ScrollView
               contentContainerStyle={styles.scrollContent}

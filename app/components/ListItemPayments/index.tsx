@@ -1,7 +1,8 @@
 import { colors } from "@/app/theme"
-import React from "react"
+import React, { memo } from "react"
 import { View, Text, StyleSheet, Pressable } from "react-native"
 import { Feather } from "@expo/vector-icons"
+import { getElevation } from "@/app/theme/elevations"
 
 type PaymentItem = {
   id: string
@@ -15,7 +16,7 @@ interface ListItemPaymentsProps {
   item: PaymentItem
 }
 
-export default function ListItemPayments({ item }: ListItemPaymentsProps) {
+const ListItemPayments = memo(({ item }: ListItemPaymentsProps) => {
   const isEntrada = item.type === "entrada"
 
   return (
@@ -47,7 +48,9 @@ export default function ListItemPayments({ item }: ListItemPaymentsProps) {
       </View>
     </Pressable>
   )
-}
+});
+
+export default ListItemPayments;
 
 const styles = StyleSheet.create({
   container: {
@@ -56,11 +59,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 12,
     marginBottom: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    ...getElevation('card'),
   },
   row: {
     flexDirection: "row",

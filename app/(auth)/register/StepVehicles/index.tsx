@@ -27,6 +27,7 @@ import Toast from "react-native-toast-message"
 
 import { getToken } from "@/app/helpers/Storage"
 import { styles } from "./styles"
+import { getKeyboardBehavior } from "@/app/theme/androidOptimizations"
 
 type VehicleTypeOption = {
   label: string
@@ -153,7 +154,7 @@ export default function VehiclesInfo() {
 
           <KeyboardAvoidingView
             style={{ flex: 1 }}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior={getKeyboardBehavior()}
           >
             <ScrollView
               contentContainerStyle={styles.scrollContent}

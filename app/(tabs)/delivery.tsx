@@ -20,6 +20,8 @@ import { Header } from "../components/Header"
 import { useAuth } from "../context/AuthContext"
 import { api } from "../service/api"
 import { colors } from "../theme"
+import { getElevation } from "../theme/elevations"
+import { getFlatListProps } from "../theme/androidOptimizations"
 import { ApiOrder } from "../types/order"
 import { ERROR_MESSAGES, FLATLIST_CONFIG } from "../utils/constants"
 import { logger } from "../utils/logger"
@@ -727,12 +729,7 @@ export default function Delivery() {
               keyExtractor={keyExtractor}
               renderItem={renderDeliveryItem}
               contentContainerStyle={styles.listContent}
-              removeClippedSubviews={true}
-              maxToRenderPerBatch={FLATLIST_CONFIG.MAX_TO_RENDER_PER_BATCH}
-              updateCellsBatchingPeriod={
-                FLATLIST_CONFIG.UPDATE_CELLS_BATCHING_PERIOD
-              }
-              windowSize={FLATLIST_CONFIG.WINDOW_SIZE}
+              {...getFlatListProps()}
               refreshControl={
                 <RefreshControl
                   refreshing={refreshing}
@@ -768,16 +765,12 @@ const styles = StyleSheet.create({
   statsHeader: {
     flexDirection: "row",
     backgroundColor: "#fff",
-    marginHorizontal: 16,
-    marginTop: 16,
-    marginBottom: 12,
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 16,
+    borderRadius: 24,
+    padding: 24,
+    ...getElevation('card'),
   },
   statItem: {
     flex: 1,
@@ -802,17 +795,13 @@ const styles = StyleSheet.create({
   },
   activeDeliveryCard: {
     backgroundColor: "#fff",
-    marginHorizontal: 16,
+    marginHorizontal: 20,
     marginTop: 16,
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
+    borderRadius: 24,
+    padding: 24,
     borderLeftWidth: 6,
     borderLeftColor: "#3b82f6",
+    ...getElevation('elevated'),
   },
   activeDeliveryHeader: {
     flexDirection: "row",
@@ -892,14 +881,10 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     minWidth: "45%",
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 20,
+    padding: 18,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
+    ...getElevation('card'),
   },
   actionButtonIcon: {
     fontSize: 28,
@@ -913,13 +898,14 @@ const styles = StyleSheet.create({
   },
   blockNotice: {
     backgroundColor: "#fef3c7",
-    marginHorizontal: 16,
+    marginHorizontal: 20,
     marginTop: 20,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 24,
     alignItems: "center",
-    borderLeftWidth: 4,
+    borderLeftWidth: 6,
     borderLeftColor: "#f59e0b",
+    ...getElevation('surface'),
   },
   blockNoticeIcon: {
     fontSize: 48,
@@ -1018,17 +1004,13 @@ const styles = StyleSheet.create({
     bottom: 100,
     right: 20,
     backgroundColor: "#10b981",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     borderRadius: 30,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
+    ...getElevation('fab'),
   },
   statusIndicatorActive: {
     backgroundColor: "#ef4444",

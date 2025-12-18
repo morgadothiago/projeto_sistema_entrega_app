@@ -14,6 +14,8 @@ import { useAuth } from "../context/AuthContext"
 import { api } from "../service/api"
 import { colors } from "../theme"
 import { logger } from "../utils/logger"
+import { getFlatListProps } from "../theme/androidOptimizations"
+import { getElevation } from "../theme/elevations"
 
 import { MaterialIcons } from "@expo/vector-icons"
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
@@ -323,10 +325,7 @@ export default function Payments() {
               ItemSeparatorComponent={ItemSeparator}
               renderItem={renderPaymentItem}
               ListEmptyComponent={ListEmpty}
-              removeClippedSubviews={true}
-              maxToRenderPerBatch={8}
-              updateCellsBatchingPeriod={50}
-              windowSize={5}
+              {...getFlatListProps()}
             />
           </View>
         </View>
@@ -380,18 +379,15 @@ const styles = StyleSheet.create({
   },
   balanceCard: {
     marginTop: 20,
-    backgroundColor: "rgba(0, 200, 179, 0.1)",
-    borderRadius: 24,
-    padding: 24,
+    marginHorizontal: 4,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 28,
+    padding: 28,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
-    borderWidth: 1,
-    borderColor: "rgba(0, 200, 179, 0.2)",
+    borderLeftWidth: 6,
+    borderLeftColor: colors.active,
+    ...getElevation('elevated'),
   },
   balanceHeader: {
     flexDirection: "row",
@@ -400,30 +396,29 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   balanceTitle: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: "600",
     color: colors.text,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
+    opacity: 0.7,
   },
   balanceValue: {
-    fontSize: 40,
-    fontWeight: "bold",
+    fontSize: 48,
+    fontWeight: "800",
     color: colors.active,
-    marginBottom: 20,
-    letterSpacing: 1,
+    marginVertical: 16,
+    letterSpacing: -1,
   },
   withdrawButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    backgroundColor: colors.buttons,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 50,
-    shadowColor: colors.buttons,
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 6,
+    gap: 10,
+    backgroundColor: colors.active,
+    paddingVertical: 16,
+    paddingHorizontal: 36,
+    borderRadius: 28,
+    minWidth: 180,
+    ...getElevation('elevated'),
   },
   actionGroup: {
     flexDirection: "row",
@@ -444,12 +439,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     backgroundColor: "#10b981",
-    paddingVertical: 16,
-    borderRadius: 16,
-    shadowColor: "#10b981",
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    paddingVertical: 18,
+    borderRadius: 20,
+    ...getElevation('card'),
   },
   depositText: {
     color: "#fff",
@@ -463,12 +455,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     backgroundColor: "#ef4444",
-    paddingVertical: 16,
-    borderRadius: 16,
-    shadowColor: "#ef4444",
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    paddingVertical: 18,
+    borderRadius: 20,
+    ...getElevation('card'),
   },
   transferText: {
     color: "#fff",
@@ -510,19 +499,14 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   listContainer: {
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    borderRadius: 20,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 20,
+    ...getElevation('card'),
   },
   separator: {
     height: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "rgba(0, 0, 0, 0.08)",
     marginVertical: 12,
   },
   emptyText: {

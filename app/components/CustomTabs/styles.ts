@@ -1,5 +1,6 @@
 import { colors } from "@/app/theme"
 import { Platform, StyleSheet } from "react-native"
+import { getElevation } from "@/app/theme/elevations"
 
 export const styles = StyleSheet.create({
   container: {
@@ -10,11 +11,7 @@ export const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 59, 115, 0.95)",
     borderTopWidth: 1,
     borderTopColor: "rgba(255, 255, 255, 0.1)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 16,
+    ...getElevation('modal'),
   },
 
   tabsRow: {
@@ -24,7 +21,7 @@ export const styles = StyleSheet.create({
     paddingTop: Platform.OS === "ios" ? 12 : 10,
     paddingBottom: Platform.OS === "ios" ? 8 : 10,
     paddingHorizontal: 8,
-    minHeight: Platform.OS === "ios" ? 60 : 65,
+    minHeight: Platform.OS === "ios" ? 60 : 56,
   },
 
   tabButton: {
@@ -44,12 +41,8 @@ export const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    shadowColor: colors.buttons,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
     transform: [{ translateY: -8 }],
+    ...getElevation('fab'),
   },
 
   iconContainer: {
