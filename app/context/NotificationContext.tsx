@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useState } from "react"
-import { Platform } from "react-native"
 import Toast from "react-native-toast-message"
-import * as Notifications from "expo-notifications"
 
 interface Notification {
     id: string
@@ -59,105 +57,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         })
     }
 
-    const notificationListener = React.useRef<Notifications.Subscription | null>(null);
-    const responseListener = React.useRef<Notifications.Subscription | null>(null);
-
-    // Expo Notifications Integration
-    React.useEffect(() => {
-        let isMounted = true;
-
-        const setupNotifications = async () => {
-            const { status: existingStatus } = await Notifications.getPermissionsAsync();
-            let finalStatus = existingStatus;
-
-            if (existingStatus !== 'granted') {
-                const { status } = await Notifications.requestPermissionsAsync();
-                finalStatus = status;
-            }
-
-            if (finalStatus !== 'granted') {
-                return;
-            }
-
-            // Get the token
-            try {
-                const tokenData = await Notifications.getExpoPushTokenAsync({
-                    projectId: "88c7717f-f0c8-4f10-9062-05720523cb8b" // ID do projeto obtido do app.json/eas.json
-                });
-            } catch (error) {
-                // Token fetch error
-            }
-
-            // Android Channel Configuration
-            try {
-                if (Platform?.OS === 'android') {
-                    await Notifications.setNotificationChannelAsync('default', {
-                        name: 'default',
-                        importance: Notifications.AndroidImportance.MAX,
-                        vibrationPattern: [0, 250, 250, 250],
-                        lightColor: '#FF231F7C',
-                    });
-                }
-            } catch (error) {
-                // Channel setup error
-            }
-
-            // Sync with Backend if user is logged in
-            try {
-                const { getItem } = require("../helpers/Storage");
-                const { STORAGE_KEYS } = require("../utils/constants");
-                const { updatePushToken } = require("../service/api");
-
-                const userJson = await getItem(STORAGE_KEYS.USER);
-                if (userJson) {
-                    const user = JSON.parse(userJson);
-                    const tokenData = await Notifications.getExpoPushTokenAsync({
-                        projectId: "88c7717f-f0c8-4f10-9062-05720523cb8b"
-                    });
-
-                    if (user?.id && tokenData?.data) {
-                        await updatePushToken(user.id, tokenData.data);
-                    }
-                }
-            } catch (error) {
-                // Backend sync error
-            }
-        };
-
-        setupNotifications();
-
-        // Listener for foreground notifications
-        notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-            const { title, body } = notification.request.content;
-            if (title && body) {
-                // Update local state smoothly
-                addNotification(title, body);
-            }
-        });
-
-        // Listener for interaction (user tapped notification)
-        responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-            // Here you can handle navigation based on data
-        });
-
-        return () => {
-            isMounted = false;
-            notificationListener.current?.remove();
-            responseListener.current?.remove();
-        };
-    }, []);
-
-    // Sync Badge Count
-    React.useEffect(() => {
-        const updateBadge = async () => {
-            try {
-                await Notifications.setBadgeCountAsync(unreadCount);
-            } catch (error) {
-                // Badge count error
-            }
-        };
-        updateBadge();
-    }, [unreadCount]);
 
     // Simulate receiving notifications for demo
     // useEffect(() => {

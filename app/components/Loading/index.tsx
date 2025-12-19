@@ -1,6 +1,7 @@
 import React from "react"
 import LottieView from "lottie-react-native"
 import { ImageBackground, View, Text, Pressable, ViewStyle } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 import { Image } from "expo-image"
 import { styles } from "./styles"
 
@@ -154,16 +155,18 @@ export default function Loading({
   // Se tem background, renderiza com ImageBackground
   if (background) {
     return (
-      <ImageBackground source={background} style={[styles.container, containerStyle]}>
-        {content}
-      </ImageBackground>
+      <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
+        <ImageBackground source={background} style={[styles.container, containerStyle]}>
+          {content}
+        </ImageBackground>
+      </SafeAreaView>
     )
   }
 
   // Senão, renderiza sem background
   return (
-    <View style={[styles.container, containerStyle]}>
+    <SafeAreaView style={[styles.container, containerStyle]} edges={["top", "bottom"]}>
       {content}
-    </View>
+    </SafeAreaView>
   )
 }

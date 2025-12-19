@@ -9,7 +9,7 @@
     "ios": "expo run:ios",
     "lint": "expo lint",
     "eas:ios": "eas build --platform ios --profile development",
-    "eas:android": "eas build --platform android --profile development"
+    "eas:android-apk": "eas build --profile apk --platform android"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
@@ -34,7 +34,7 @@
     "expo-linear-gradient": "~15.0.8",
     "expo-linking": "~8.0.10",
     "expo-location": "~19.0.8",
-    "expo-notifications": "~0.32.15",
+    "expo-navigation-bar": "~5.0.10",
     "expo-router": "~6.0.19",
     "expo-secure-store": "~15.0.8",
     "expo-splash-screen": "~31.0.12",

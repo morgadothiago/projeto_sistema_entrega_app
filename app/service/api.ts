@@ -1,6 +1,4 @@
 import Axios, { AxiosResponse } from "axios"
-import Constants from "expo-constants"
-import { Platform } from "react-native"
 import Toast from "react-native-toast-message"
 import { clearSession, getItem, getToken, saveItem } from "../helpers/Storage"
 import { ApiResponse } from "../types/ApiResponse"
@@ -276,7 +274,7 @@ api.interceptors.response.use(
       }
 
       // ⚠️ Erros de validação ou requisição
-      if (status >= 400 && status < 500 && status !== 401) {
+      if (status >= 400 && status < 500 && status !== 401 && status !== 404) {
         Toast.show({
           type: "error",
           text1: "Erro",
@@ -302,14 +300,3 @@ api.interceptors.response.use(
 )
 
 export { api }
-
-
-
-export async function updatePushToken(userId: number, token: string) {
-  try {
-    const response = await api.patch(`/users/${userId}/push-token`, { pushToken: token })
-    return response.data
-  } catch (error: any) {
-    // Não mostra toast para não incomodar o usuário
-  }
-}

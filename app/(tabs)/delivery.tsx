@@ -23,7 +23,7 @@ import { colors } from "../theme"
 import { getElevation } from "../theme/elevations"
 import { getFlatListProps } from "../theme/androidOptimizations"
 import { ApiOrder } from "../types/order"
-import { ERROR_MESSAGES, FLATLIST_CONFIG } from "../utils/constants"
+import { ERROR_MESSAGES } from "../utils/constants"
 import { logger } from "../utils/logger"
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window")

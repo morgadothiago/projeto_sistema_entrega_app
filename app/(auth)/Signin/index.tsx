@@ -14,6 +14,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 
 import { yupResolver } from "@hookform/resolvers/yup"
 import { useForm } from "react-hook-form"
@@ -109,26 +110,27 @@ export default function LoginScreen() {
   })
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={getKeyboardBehavior()}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ImageBackground
-          source={fundoLogo}
-          style={{ flex: 1 }}
-          resizeMode="cover"
-        >
-          <View style={styles.overlay} />
-
-          <ScrollView
-            contentContainerStyle={{ flexGrow: 1 }}
-            keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={{ flex: 1 }} edges={[]}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={getKeyboardBehavior()}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ImageBackground
+            source={fundoLogo}
             style={{ flex: 1 }}
+            resizeMode="cover"
           >
-            <View
-              style={[styles.content, { flex: 1, justifyContent: "center" }]}
+            <View style={styles.overlay} />
+
+            <ScrollView
+              contentContainerStyle={{ flexGrow: 1 }}
+              keyboardShouldPersistTaps="handled"
+              style={{ flex: 1 }}
             >
+              <View
+                style={[styles.content, { flex: 1, justifyContent: "center" }]}
+              >
               {/* Logo com animação */}
               <Animated.View
                 style={{
@@ -228,6 +230,7 @@ export default function LoginScreen() {
           <Text style={styles.loadingText}>Carregando...</Text>
         </View>
       )}
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   )
 }

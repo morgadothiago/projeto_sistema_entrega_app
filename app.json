@@ -1,24 +1,19 @@
 {
   "expo": {
     "name": "entregador-app",
-    "slug": "entregador-app",
-    "owner": "thiago_morgado",
+    "slug": "mobile",
     "version": "1.0.0",
-    "platforms": [
-      "ios",
-      "android"
-    ],
     "orientation": "portrait",
     "icon": "./app/assets/icon.png",
+    "scheme": "sistema-entregas",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
     "splash": {
       "image": "./app/assets/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#0057FF"
     },
     "backgroundColor": "#0057FF",
-    "scheme": "entregador",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -35,7 +30,7 @@
         "foregroundImage": "./app/assets/android-icon-foreground.png",
         "backgroundImage": "./app/assets/android-icon-foreground.png",
         "monochromeImage": "./app/assets/android-icon-foreground.png",
-        "backgroundColor": "#0057FF"
+        "backgroundColor": "transparent"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -49,42 +44,13 @@
         "READ_MEDIA_IMAGES"
       ]
     },
-    "plugins": [
-      "expo-router",
-      [
-        "expo-location",
-        {
-          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
-        }
-      ],
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to take photos of deliveries.",
-          "microphonePermission": false
-        }
-      ],
-      [
-        "expo-splash-screen",
-        {
-          "image": "./app/assets/icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#0057FF",
-          "dark": {
-            "backgroundColor": "#0057FF"
-          }
-        }
-      ]
-    ],
+    "plugins": ["expo-router", "expo-secure-store"],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
     },
     "extra": {
-      "router": {},
       "eas": {
-        "projectId": "88c7717f-f0c8-4f10-9062-05720523cb8b"
+        "projectId": "8b7afb94-61e1-4916-b41a-22f4366af454"
       }
     }
   }

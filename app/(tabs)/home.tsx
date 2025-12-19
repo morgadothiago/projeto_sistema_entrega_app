@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useFocusEffect, useRouter } from "expo-router"
-import React, { useCallback, useRef, useState } from "react"
+import React, { useCallback, useState } from "react"
 import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Header } from "../components/Header"
@@ -8,36 +8,11 @@ import QuickActionButton from "../components/QuickActionButton"
 import StatCard from "../components/StatCard"
 import UserWrapper from "../components/UserWrapper"
 import { useAuth } from "../context/AuthContext"
-import { api } from "../service/api"
 import { colors } from "../theme"
 import { getElevation } from "../theme/elevations"
-import { ApiOrder } from "../types/order"
 import { logger } from "../utils/logger"
 
-type DeliveryMan = {
-  name: string
-  email: string
-  cpf: string
-  phone: string
-  documents: DeliverDocuments
-  bankAccount: deliveryBankAccount
-  avatar: string
-}
 
-type DeliverDocuments = {
-  rg: string
-  cpf: string
-  cnh: string
-}
-
-type deliveryBankAccount = {
-  bankName: string
-  accountNumber: string
-  agency: string
-  pixCode: string
-  accountType: string
-  holderName: string
-}
 
 type DeliveryStats = {
   completed: number
@@ -47,9 +22,7 @@ type DeliveryStats = {
 
 export default function Home() {
   const { user, token } = useAuth()
-  const [deliveryManData, setDeliveryManData] = useState<DeliveryMan | null>(
-    null
-  )
+  // Remove deliveryManData state - use user from context directly
   const [stats, setStats] = useState<DeliveryStats>({
     completed: 0,
     todayEarnings: 0,
@@ -58,40 +31,17 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingStats, setIsLoadingStats] = useState(false)
   const [statsError, setStatsError] = useState<string | null>(null)
+
+  // Destructure DeliveryMan from user context
   const { DeliveryMan } = user || {}
   const router = useRouter()
 
   const [refreshing, setRefreshing] = useState(false)
 
-  const CACHE_KEY_USER = user?.id ? `@delivery_app:user_data:${user.id}` : null
+  // Remove CACHE_KEY_USER - not needed
   const CACHE_KEY_STATS = user?.id ? `@delivery_app:user_stats:${user.id}` : null
 
-  // Função para carregar dados do usuário (APENAS AsyncStorage - SEM API)
-  const loadUserData = useCallback(async () => {
-    if (!user?.id) return null
-
-    try {
-      if (CACHE_KEY_USER) {
-        const cachedUser = await AsyncStorage.getItem(CACHE_KEY_USER)
-        if (cachedUser) {
-          const data = JSON.parse(cachedUser)
-          setDeliveryManData(data)
-          logger.info("Dados do usuário carregados do AsyncStorage", {
-            context: "Home",
-            data: { userId: user?.id, hasDeliveryMan: !!data?.DeliveryMan }
-          })
-          return data
-        } else {
-          logger.warn("Nenhum dado de usuário em cache", { context: "Home" })
-          return null
-        }
-      }
-      return null
-    } catch (error: any) {
-      logger.error("Erro ao ler dados do usuário do AsyncStorage", error, { context: "Home" })
-      return null
-    }
-  }, [user?.id, CACHE_KEY_USER])
+  // Remove loadUserData function - not needed
 
   // Função para estatísticas (APENAS AsyncStorage - SEM API)
   const loadStats = useCallback(async () => {
@@ -137,8 +87,7 @@ export default function Home() {
     setIsLoading(true)
 
     try {
-      // Carregar dados do usuário do AsyncStorage
-      await loadUserData()
+      // Remove loadUserData call
 
       // Carregar estatísticas do AsyncStorage
       if (CACHE_KEY_STATS) {
@@ -182,7 +131,7 @@ export default function Home() {
     } finally {
       setIsLoading(false)
     }
-  }, [CACHE_KEY_STATS, loadUserData])
+  }, [CACHE_KEY_STATS]) // Remove loadUserData dependency
 
   useFocusEffect(
     useCallback(() => {
@@ -198,10 +147,10 @@ export default function Home() {
   )
 
   const handleRefresh = async () => {
-    // Apenas recarrega do AsyncStorage (SEM API)
+    // Apenas recarrega estatísticas (SEM API e SEM USER DATA - user vem do context)
     setRefreshing(true)
     try {
-      await loadUserData()
+      // await loadUserData() // Removed
       await loadStats()
       logger.info("Dados recarregados do AsyncStorage", { context: "Home" })
     } catch (error: any) {
@@ -213,19 +162,21 @@ export default function Home() {
 
   const handleClearCache = async () => {
     try {
-      if (CACHE_KEY_USER && CACHE_KEY_STATS) {
-        await AsyncStorage.removeItem(CACHE_KEY_USER)
+      // Remove CACHE_KEY_USER
+      if (CACHE_KEY_STATS) {
+        // await AsyncStorage.removeItem(CACHE_KEY_USER) // Removed
         await AsyncStorage.removeItem(CACHE_KEY_STATS)
       }
       Alert.alert("Cache Limpo", "Os dados locais foram removidos. Recarregando...")
-      setDeliveryManData(null)
+      // setDeliveryManData(null) // Removed
       init()
     } catch (error) {
       Alert.alert("Erro", "Falha ao limpar cache")
     }
   }
 
-  if (isLoading || !deliveryManData) {
+  // Remove (!deliveryManData) check from loading condition
+  if (isLoading || !user) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>

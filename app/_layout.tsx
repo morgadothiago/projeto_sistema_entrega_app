@@ -1,7 +1,7 @@
 import { toastConfig } from "@/toastConfig"
-import { Stack } from "expo-router"
+import { Stack, useRouter, useSegments } from "expo-router"
 import { StatusBar } from "expo-status-bar"
-import React from "react"
+import React, { useEffect } from "react"
 import { SafeAreaProvider } from "react-native-safe-area-context"
 import Toast from "react-native-toast-message"
 import FundoLogo from "./assets/funndo.png"
@@ -9,22 +9,36 @@ import LoadingAnimation from "./assets/Loading.json"
 import Logo from "./assets/logo.png"
 import Loading from "./components/Loading"
 // import ErrorBoundary from "./components/ErrorBoundary"
+import * as NavigationBar from 'expo-navigation-bar'
+import { Platform } from "react-native"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { NotificationProvider } from "./context/NotificationContext"
-import * as Notifications from "expo-notifications"
-
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-})
 
 function InitialLayout() {
-  const { loading } = useAuth()
+  const { user, loading } = useAuth()
+  const segments = useSegments()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      NavigationBar.setBackgroundColorAsync('transparent')
+      NavigationBar.setButtonStyleAsync('light')
+    }
+  }, [])
+
+  useEffect(() => {
+    if (loading) return
+
+    const inAuthGroup = segments[0] === '(auth)'
+
+    if (!user && !inAuthGroup) {
+      // Redireciona para login se não estiver autenticado
+      router.replace('/Signin')
+    } else if (user && inAuthGroup) {
+      // Redireciona para home se já estiver autenticado
+      router.replace('/(tabs)/home')
+    }
+  }, [user, segments, loading])
 
   if (loading) {
     return (
@@ -54,24 +68,34 @@ function InitialLayout() {
 export default function RootLayout() {
   return (
     // <ErrorBoundary>
-      <SafeAreaProvider>
-        <AuthProvider>
-          <NotificationProvider>
-            <InitialLayout />
-          </NotificationProvider>
-        </AuthProvider>
-      </SafeAreaProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <NotificationProvider>
+          <InitialLayout />
+        </NotificationProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
     // </ErrorBoundary>
   )
 }
 
 export const unstable_settings = {
   _ignore: [
+    // Ignore all style files
     '**/*.styles.ts',
+    '**/styles.ts',
+    '**/style.ts',
+
+    // Ignore type definitions
     '**/*.d.ts',
+    '@types/**/*',
+
+    // Ignore non-route directories
     'assets/**/*',
     'components/**/*',
     'context/**/*',
+    'helpers/**/*',
+    'hooks/**/*',
     'mocks/**/*',
     'schema/**/*',
     'service/**/*',
@@ -79,11 +103,6 @@ export const unstable_settings = {
     'theme/**/*',
     'types/**/*',
     'util/**/*',
-    'components/Header/styles.ts',
-    'components/Input/styles.ts',
-    'components/Loading/styles.ts',
-    'components/MultiStep.tsx',
-    'components/Select/index.tsx',
-    'components/Select/styles.ts',
+    'utils/**/*',
   ],
 }
