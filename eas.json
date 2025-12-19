@@ -19,6 +19,7 @@
       "android": {
         "buildType": "apk"
       },
+
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.quicktecnologia.com/",
         "EXPO_PUBLIC_API_TIMEOUT": "10000",
@@ -30,6 +31,9 @@
       "autoIncrement": true,
       "android": {
         "buildType": "app-bundle"
+      },
+      "ios": {
+        "simulator": false
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.quicktecnologia.com/",

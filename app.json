@@ -20,6 +20,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.thiagomorgado.entregador",
+      "icon": "./app/assets/icon.png",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -30,7 +31,7 @@
         "foregroundImage": "./app/assets/android-icon-foreground.png",
         "backgroundImage": "./app/assets/android-icon-foreground.png",
         "monochromeImage": "./app/assets/android-icon-foreground.png",
-        "backgroundColor": "transparent"
+        "backgroundColor": "#0057FF"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
