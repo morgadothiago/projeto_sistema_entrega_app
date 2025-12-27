@@ -1,4 +1,4 @@
-import { normalizeData } from "../app/util/nomalizer"
+import { normalizeData } from "../app/utils/normalizer"
 
 const bikeUserInfo = {
   name: "Bike Tester",

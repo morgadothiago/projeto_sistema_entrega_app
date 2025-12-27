@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react"
+import React, { useCallback, useState, useRef } from "react"
 import {
     FlatList,
     Pressable,
@@ -46,8 +46,23 @@ export default function Notifications() {
         "all" | "earning" | "withdrawal"
     >("all")
 
-    const fetchTransactions = useCallback(async () => {
+    // Ref para controlar frequência de chamadas
+    const lastFetchTime = useRef<number>(0)
+    const FETCH_COOLDOWN = 3000 // 3 segundos de cooldown
+
+    const fetchTransactions = useCallback(async (forceRefresh = false) => {
         if (!user?.id) return
+
+        // Evita chamadas excessivas se não for forçado
+        const now = Date.now()
+        if (!forceRefresh && now - lastFetchTime.current < FETCH_COOLDOWN) {
+            logger.info("Fetch ignorado - cooldown ativo", { context: "Notifications" })
+            setIsFetching(false)
+            setRefreshing(false)
+            return
+        }
+
+        lastFetchTime.current = now
 
         try {
             const { data: balanceData } = await api.get<DeliveryStats>(
@@ -78,7 +93,8 @@ export default function Notifications() {
 
     const onRefresh = useCallback(() => {
         setRefreshing(true)
-        fetchTransactions()
+        // Força refresh ao puxar para atualizar
+        fetchTransactions(true)
     }, [fetchTransactions])
 
     const filteredTransactions = transactions.filter((item) => {

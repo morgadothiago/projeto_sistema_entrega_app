@@ -5,7 +5,7 @@ import Input from "@/app/components/Input"
 import { MultiStep } from "@/app/components/MultiStep"
 import { useMultiStep } from "@/app/context/MultiStepContext"
 import { newAccount } from "@/app/service/api"
-import { normalizeData } from "@/app/util/nomalizer"
+import { normalizeData } from "@/app/utils/normalizer"
 import { ImageBackground } from "expo-image"
 import Toast from "react-native-toast-message"
 
@@ -70,7 +70,7 @@ export default function AccessStep() {
       }
 
       // Normaliza e valida os dados antes de enviar
-      const normalizedData = normalizeData(userInfo, accessData)
+      const normalizedData = normalizeData(userInfo as any, accessData)
 
       // envia para a API
       newAccount(normalizedData)

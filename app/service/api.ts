@@ -1,8 +1,9 @@
-import Axios, { AxiosResponse } from "axios"
+import Axios, { AxiosResponse, InternalAxiosRequestConfig } from "axios"
 import Toast from "react-native-toast-message"
 import { clearSession, getItem, getToken, saveItem } from "../helpers/Storage"
 import { ApiResponse } from "../types/ApiResponse"
 import { STORAGE_KEYS } from "../utils/constants"
+import { requestCache } from "../utils/requestCache"
 
 interface LoginData {
   email: string
@@ -215,12 +216,83 @@ export async function resetPassword(data: {
 }
 
 // -------------------- INTERCEPTORES GLOBAIS --------------------
+
+// Configuração de cache por endpoint (em minutos)
+const CACHE_CONFIG: Record<string, number> = {
+  '/deliveryman': 3, // 3 minutos para dados financeiros
+  '/delivery': 2, // 2 minutos para lista de entregas
+  '/balance': 3, // 3 minutos para saldo
+}
+
+// Função para determinar se deve usar cache
+function shouldUseCache(config: InternalAxiosRequestConfig): boolean {
+  // Apenas GET requests são cacheadas
+  if (config.method?.toLowerCase() !== 'get') return false
+
+  // Ignora se explicitamente desabilitado
+  if ((config as any).skipCache === true) return false
+
+  return true
+}
+
+// Função para obter TTL do cache baseado na URL
+function getCacheTTL(url: string = ''): number {
+  for (const [path, ttl] of Object.entries(CACHE_CONFIG)) {
+    if (url.includes(path)) {
+      return ttl * 60 * 1000 // Converte minutos para ms
+    }
+  }
+  return 5 * 60 * 1000 // 5 minutos padrão
+}
+
 api.interceptors.request.use(
   async (config) => {
     const token = await getToken()
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+
+    // ===== CACHE E DEDUPLICAÇÃO DE REQUESTS =====
+    if (shouldUseCache(config)) {
+      const url = config.url || ''
+
+      // 1. Verifica se há dados em cache
+      const cachedData = requestCache.get(url, config)
+      if (cachedData) {
+        // Retorna dados do cache sem fazer request
+        return Promise.reject({
+          config,
+          response: {
+            data: cachedData,
+            status: 200,
+            statusText: 'OK (from cache)',
+            headers: {},
+            config,
+          },
+          isFromCache: true,
+        })
+      }
+
+      // 2. Verifica se há request idêntica em andamento (deduplicação)
+      const pendingRequest = requestCache.getPendingRequest(url, config)
+      if (pendingRequest) {
+        // Aguarda a request existente ao invés de criar nova
+        return pendingRequest.then((data) => {
+          return Promise.reject({
+            config,
+            response: {
+              data,
+              status: 200,
+              statusText: 'OK (from pending)',
+              headers: {},
+              config,
+            },
+            isFromCache: true,
+          })
+        })
+      }
+    }
+
     return config
   },
   (error) => {
@@ -229,8 +301,22 @@ api.interceptors.request.use(
 )
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // ===== ARMAZENA RESPOSTA NO CACHE =====
+    const config = response.config as InternalAxiosRequestConfig
+    if (shouldUseCache(config)) {
+      const url = config.url || ''
+      const ttl = getCacheTTL(url)
+      requestCache.set(url, response.data, config, ttl)
+    }
+    return response
+  },
   async (error) => {
+    // Se é resposta do cache, retorna sucesso
+    if (error.isFromCache) {
+      return Promise.resolve(error.response)
+    }
+
     const originalRequest = error.config
 
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -298,5 +384,18 @@ api.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+// Função auxiliar para invalidar cache
+export function invalidateCache(pattern?: string) {
+  requestCache.invalidate(pattern)
+}
+
+export function invalidateDeliveriesCache() {
+  requestCache.invalidateDeliveries()
+}
+
+export function invalidateFinancialCache() {
+  requestCache.invalidateFinancial()
+}
 
 export { api }

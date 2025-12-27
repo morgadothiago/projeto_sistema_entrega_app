@@ -20,7 +20,7 @@ import DeliveryCard from "../components/DeliveryCard"
 import { Header } from "../components/Header"
 import AppPicker from "../components/Select"
 import { useAuth } from "../context/AuthContext"
-import { DeliveryItem } from "../mocks/deliveriesData"
+import type { DeliveryItem } from "../mocks/deliveriesData"
 import { api } from "../service/api"
 import { colors } from "../theme"
 import { getElevation } from "../theme/elevations"
@@ -161,7 +161,7 @@ export default function Charts() {
     })
   }, [])
 
-  const fetchDeliveries = useCallback(async () => {
+  const fetchDeliveries = useCallback(async (forceRefresh = false) => {
     if (!token || !user) return
 
     try {
@@ -173,7 +173,9 @@ export default function Charts() {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      })
+        // Permite forçar refresh ignorando cache
+        ...(forceRefresh && { skipCache: true }),
+      } as any)
 
       let orders: ApiOrder[] = response.data.data || [] // Garantir que é array
 
@@ -260,7 +262,8 @@ export default function Charts() {
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true)
-    fetchDeliveries()
+    // Força refresh ignorando cache
+    fetchDeliveries(true)
   }, [fetchDeliveries])
 
   const handleDayChange = useCallback((value: string | undefined) => {

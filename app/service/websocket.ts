@@ -11,9 +11,11 @@ type LocationData = {
 class WebSocketService {
   private socket: Socket | null = null
   private reconnectAttempts = 0
-  private maxReconnectAttempts = 5
+  private maxReconnectAttempts = 3 // Reduzido de 5 para 3
   private url: string = ""
   private token: string = ""
+  private lastLocationSent = 0
+  private locationThrottle = 10000 // 10 segundos entre envios de localização
 
   connect(url: string, token: string) {
     this.url = url
@@ -30,7 +32,8 @@ class WebSocketService {
         transports: ["websocket"],
         reconnection: true,
         reconnectionAttempts: this.maxReconnectAttempts,
-        reconnectionDelay: 3000,
+        reconnectionDelay: 2000, // Delay inicial: 2s
+        reconnectionDelayMax: 30000, // Máximo: 30s (backoff exponencial)
       })
 
       // Eventos do Socket.IO
@@ -80,12 +83,23 @@ class WebSocketService {
     }
   }
 
-  // Envia localização via socket.emit
+  // Envia localização via socket.emit (com throttling)
   sendLocation(latitude: number, longitude: number, deliveryCode?: string) {
     if (!this.socket || !this.socket.connected) {
       logger.warn("Socket.IO não está conectado", { context: "WebSocket" })
       return
     }
+
+    // Throttling: evita enviar localização muito frequentemente
+    const now = Date.now()
+    if (now - this.lastLocationSent < this.locationThrottle) {
+      logger.debug("Envio de localização ignorado (throttle ativo)", {
+        context: "WebSocket",
+      })
+      return
+    }
+
+    this.lastLocationSent = now
 
     const locationData: LocationData = {
       latitude,

@@ -14,19 +14,23 @@
         "NODE_ENV": "development"
       }
     },
+
     "apk": {
+      "developmentClient": false,
       "distribution": "internal",
       "android": {
         "buildType": "apk"
       },
-
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.quicktecnologia.com/",
         "EXPO_PUBLIC_API_TIMEOUT": "10000",
-        "EXPO_PUBLIC_VIA_CEP_API_URL": "https://viacep.com.br/ws"
+        "EXPO_PUBLIC_VIA_CEP_API_URL": "https://viacep.com.br/ws",
+        "NODE_ENV": "production"
       }
     },
+
     "production": {
+      "developmentClient": false,
       "distribution": "store",
       "autoIncrement": true,
       "android": {
@@ -38,7 +42,8 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.quicktecnologia.com/",
         "EXPO_PUBLIC_API_TIMEOUT": "10000",
-        "EXPO_PUBLIC_VIA_CEP_API_URL": "https://viacep.com.br/ws"
+        "EXPO_PUBLIC_VIA_CEP_API_URL": "https://viacep.com.br/ws",
+        "NODE_ENV": "production"
       }
     }
   },

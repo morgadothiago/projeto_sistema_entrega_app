@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react"
+import React, { useCallback, useMemo, useState, useRef } from "react"
 import {
   FlatList,
   Modal,
@@ -11,7 +11,7 @@ import {
 
 import { useFocusEffect, useRouter } from "expo-router"
 import { useAuth } from "../context/AuthContext"
-import { api } from "../service/api"
+import { api, invalidateFinancialCache } from "../service/api"
 import { colors } from "../theme"
 import { logger } from "../utils/logger"
 import { getFlatListProps } from "../theme/androidOptimizations"
@@ -81,8 +81,21 @@ export default function Payments() {
   const [balance, setBalance] = useState(0)
   const [transactions, setTransactions] = useState<MappedTransaction[]>([])
 
-  const fetchFinancialData = useCallback(async () => {
+  // Ref para controlar frequência de chamadas
+  const lastFetchTime = useRef<number>(0)
+  const FETCH_COOLDOWN = 3000 // 3 segundos de cooldown entre fetches
+
+  const fetchFinancialData = useCallback(async (forceRefresh = false) => {
     if (!user?.id) return
+
+    // Evita chamadas excessivas se não for forçado
+    const now = Date.now()
+    if (!forceRefresh && now - lastFetchTime.current < FETCH_COOLDOWN) {
+      logger.info("Fetch ignorado - cooldown ativo", { context: "Payments" })
+      return
+    }
+
+    lastFetchTime.current = now
 
     try {
       const { data: balanceData } = await api.get<DeliveryStats>(
@@ -162,7 +175,12 @@ export default function Payments() {
 
       setIsLoading(false)
       setShowSuccess(true)
-      fetchFinancialData()
+
+      // Invalida cache financeiro após saque
+      invalidateFinancialCache()
+
+      // Força refresh dos dados
+      fetchFinancialData(true)
     } catch (error: any) {
       logger.error("Erro ao realizar saque", error, { context: "Payments" })
 

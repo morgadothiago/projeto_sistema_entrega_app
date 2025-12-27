@@ -54,12 +54,25 @@ export default function Home() {
       if (CACHE_KEY_STATS) {
         const cachedStats = await AsyncStorage.getItem(CACHE_KEY_STATS)
         if (cachedStats) {
-          const parsedStats = JSON.parse(cachedStats)
-          setStats(parsedStats)
-          logger.info("Estatísticas carregadas do AsyncStorage", {
-            context: "Home",
-            data: parsedStats
-          })
+          try {
+            const parsedStats = JSON.parse(cachedStats)
+            setStats(parsedStats)
+            logger.info("Estatísticas carregadas do AsyncStorage", {
+              context: "Home",
+              data: parsedStats
+            })
+          } catch (parseError) {
+            logger.error("Erro ao parsear estatísticas corrompidas", parseError, {
+              context: "Home"
+            })
+            // Remove dados corrompidos e usa valores padrão
+            await AsyncStorage.removeItem(CACHE_KEY_STATS)
+            setStats({
+              completed: 0,
+              todayEarnings: 0,
+              balance: 0,
+            })
+          }
         } else {
           // Valores padrão se não houver cache
           setStats({

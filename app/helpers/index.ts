@@ -1,8 +1,9 @@
 /**
  * Exportações centralizadas dos helpers
+ * Re-exporta de ../utils/ para manter backward compatibility
  */
 
-// Máscaras
+// Máscaras - re-exportado de utils
 export {
   removeNonNumeric,
   removeMask,
@@ -17,11 +18,11 @@ export {
   applyPixKeyMask,
   dateMask,
   licensePlateMask,
-} from "./masks"
+} from "../utils/masks"
 
-// Detector de tipo de chave Pix
+// Detector de tipo de chave Pix - re-exportado de utils
 export {
   detectPixKeyType,
   getPixKeyTypeDescription,
   type PixKeyType,
-} from "./pixKeyDetector"
+} from "../utils/pixKeyDetector"

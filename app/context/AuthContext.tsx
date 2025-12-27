@@ -36,13 +36,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const storagedUser = await getItem(STORAGE_KEYS.USER)
 
         if (storagedToken && storagedUser) {
-          api.defaults.headers.common[
-            "Authorization"
-          ] = `Bearer ${storagedToken}`
-          setToken(storagedToken)
-          setUser(JSON.parse(storagedUser))
+          try {
+            const parsedUser = JSON.parse(storagedUser)
+            api.defaults.headers.common[
+              "Authorization"
+            ] = `Bearer ${storagedToken}`
+            setToken(storagedToken)
+            setUser(parsedUser)
+          } catch (parseError) {
+            console.error('Failed to parse stored user data:', parseError)
+            // Limpa dados corrompidos
+            await clearSession()
+          }
         }
       } catch (error) {
+        console.error('Error loading storage data:', error)
       } finally {
         setLoading(false)
       }

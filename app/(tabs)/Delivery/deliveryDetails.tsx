@@ -43,7 +43,8 @@ export default function DeliveryDetails() {
           params: { code: code },
         })
         if (cancelled) return
-        const order = response.data.data[0]
+        // Validação segura de array
+        const order = response.data?.data?.length > 0 ? response.data.data[0] : null
         if (order) {
           if (order.ClientAddress && Array.isArray(order.ClientAddress)) {
             order.ClientAddress = order.ClientAddress[0]

@@ -30,7 +30,7 @@ import {
   removeNonNumeric,
 } from "../helpers"
 import { colors } from "../theme"
-import { formatDateToBR } from "../util/masks"
+import { formatDateToBR } from "../utils/masks"
 
 type FormData = {
   name: string

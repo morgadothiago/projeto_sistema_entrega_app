@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { DeliveryItem } from "@/app/mocks/deliveriesData";
+import type { DeliveryItem } from "@/app/mocks/deliveriesData";
 import { colors } from "@/app/theme";
 import { getElevation } from "@/app/theme/elevations";
 

@@ -13,6 +13,7 @@ function isSecureKey(key: string): boolean {
 /**
  * Salva um item no armazenamento apropriado.
  * Tokens vão para o SecureStore, o resto para o AsyncStorage.
+ * @throws Error se falhar ao salvar
  */
 async function saveItem(key: string, value: string) {
   try {
@@ -23,6 +24,7 @@ async function saveItem(key: string, value: string) {
     }
   } catch (error) {
     console.error(`Erro ao salvar ${key}:`, error)
+    throw new Error(`Falha ao salvar ${key}: ${error}`)
   }
 }
 
@@ -44,6 +46,7 @@ async function getItem(key: string): Promise<string | null> {
 
 /**
  * Remove um item do armazenamento apropriado.
+ * @throws Error se falhar ao remover
  */
 async function removeItem(key: string) {
   try {
@@ -54,6 +57,7 @@ async function removeItem(key: string) {
     }
   } catch (error) {
     console.error(`Erro ao remover ${key}:`, error)
+    throw new Error(`Falha ao remover ${key}: ${error}`)
   }
 }
 

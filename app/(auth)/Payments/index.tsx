@@ -8,11 +8,11 @@ import {
   cpfMask,
   removeNonNumeric,
   removePixKeyMask,
-} from "@/app/helpers/masks"
+} from "@/app/utils/masks"
 import {
   detectPixKeyType,
   getPixKeyTypeDescription,
-} from "@/app/helpers/pixKeyDetector"
+} from "@/app/utils/pixKeyDetector"
 import { PaymentFormData, PaymentInfoSchema } from "@/app/schema/payments"
 import { api } from "@/app/service/api"
 import { colors } from "@/app/theme"

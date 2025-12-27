@@ -18,7 +18,7 @@ import Toast from "react-native-toast-message"
 import DeliveryCompletionCapture from "../components/DeliveryCompletionCapture"
 import { Header } from "../components/Header"
 import { useAuth } from "../context/AuthContext"
-import { api } from "../service/api"
+import { api, invalidateDeliveriesCache } from "../service/api"
 import { colors } from "../theme"
 import { getElevation } from "../theme/elevations"
 import { getFlatListProps } from "../theme/androidOptimizations"
@@ -240,8 +240,8 @@ export default function Delivery() {
           )
         )
 
-        // Recarregar em background para garantir sincronia
-        getAllDeliverys()
+        // Invalida cache para próxima requisição buscar dados atualizados
+        invalidateDeliveriesCache()
       } catch (error: any) {
         logger.error("Erro ao aceitar entrega", error, {
           context: "Delivery",
@@ -391,8 +391,8 @@ export default function Delivery() {
           )
         )
 
-        // Recarregar em background
-        getAllDeliverys()
+        // Invalida cache para próxima requisição buscar dados atualizados
+        invalidateDeliveriesCache()
       } catch (error: any) {
         // Log detalhado do erro
         logger.error("Erro ao finalizar entrega", error, {

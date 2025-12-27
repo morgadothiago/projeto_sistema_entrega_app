@@ -10,7 +10,7 @@ import { removeNonNumeric } from './masks';
  */
 export interface UserInfo {
   name: string;
-  dob: string | Date;
+  dob: string | Date | { day: number; month: number; year: number };
   cpf: string;
   phone: string;
   address: string;
