@@ -8,6 +8,7 @@ import QuickActionButton from "../components/QuickActionButton"
 import StatCard from "../components/StatCard"
 import UserWrapper from "../components/UserWrapper"
 import { useAuth } from "../context/AuthContext"
+import { api } from "../service/api"
 import { colors } from "../theme"
 import { getElevation } from "../theme/elevations"
 import { logger } from "../utils/logger"
@@ -18,6 +19,7 @@ type DeliveryStats = {
   completed: number
   todayEarnings: number
   balance: number
+  date?: string // Data para controle de reset de 24h
 }
 
 export default function Home() {
@@ -43,108 +45,158 @@ export default function Home() {
 
   // Remove loadUserData function - not needed
 
-  // Função para estatísticas (APENAS AsyncStorage - SEM API)
+  // Função para buscar estatísticas da API e salvar no cache
   const loadStats = useCallback(async () => {
-    if (!user?.id) return
+    if (!user?.id || !token) return
 
     setIsLoadingStats(true)
     setStatsError(null)
     try {
-      // Ler stats do AsyncStorage
+      // Buscar entregas da API
+      const response = await api.get("/delivery", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const orders = response.data.data || []
+
+      // Calcular estatísticas
+      const today = new Date().toDateString()
+
+      // Contar entregas concluídas de hoje
+      const completedToday = orders.filter((order: any) => {
+        if (order.status?.toUpperCase() !== "COMPLETED") return false
+
+        const completedDate = order.completedAt ? new Date(order.completedAt).toDateString() : null
+        return completedDate === today
+      }).length
+
+      // Calcular ganhos de hoje (soma dos preços das entregas concluídas)
+      const todayEarnings = orders
+        .filter((order: any) => {
+          if (order.status?.toUpperCase() !== "COMPLETED") return false
+
+          const completedDate = order.completedAt ? new Date(order.completedAt).toDateString() : null
+          return completedDate === today
+        })
+        .reduce((acc: number, order: any) => {
+          const price = typeof order.price === "string"
+            ? parseFloat(order.price.replace(/[R$\s]/g, "").replace(",", "."))
+            : parseFloat(order.price || 0)
+          return acc + (isNaN(price) ? 0 : price)
+        }, 0)
+
+      const newStats = {
+        completed: completedToday,
+        todayEarnings,
+        balance: 0,
+        date: today, // Importante: salvar a data
+      }
+
+      setStats(newStats)
+
+      // Salvar no AsyncStorage com data de hoje para reset automático
+      if (CACHE_KEY_STATS) {
+        await AsyncStorage.setItem(
+          CACHE_KEY_STATS,
+          JSON.stringify(newStats)
+        )
+      }
+
+      logger.info("Estatísticas carregadas da API e salvas no cache", {
+        context: "Home",
+        data: newStats
+      })
+    } catch (error: any) {
+      logger.error("Erro ao buscar estatísticas da API", error, {
+        context: "Home"
+      })
+      setStatsError("Erro ao carregar estatísticas")
+
+      // Tentar carregar do cache em caso de erro
       if (CACHE_KEY_STATS) {
         const cachedStats = await AsyncStorage.getItem(CACHE_KEY_STATS)
         if (cachedStats) {
           try {
             const parsedStats = JSON.parse(cachedStats)
-            setStats(parsedStats)
-            logger.info("Estatísticas carregadas do AsyncStorage", {
-              context: "Home",
-              data: parsedStats
-            })
-          } catch (parseError) {
-            logger.error("Erro ao parsear estatísticas corrompidas", parseError, {
-              context: "Home"
-            })
-            // Remove dados corrompidos e usa valores padrão
-            await AsyncStorage.removeItem(CACHE_KEY_STATS)
-            setStats({
-              completed: 0,
-              todayEarnings: 0,
-              balance: 0,
-            })
+            // Verificar se o cache não expirou (ainda é do dia de hoje)
+            const cachedDate = parsedStats.date
+            const today = new Date().toDateString()
+
+            if (cachedDate === today) {
+              setStats(parsedStats)
+              logger.info("Estatísticas carregadas do cache (fallback válido)", {
+                context: "Home"
+              })
+            } else {
+              // Cache expirado - usar zeros
+              setStats({
+                completed: 0,
+                todayEarnings: 0,
+                balance: 0,
+              })
+              logger.info("Cache expirado - usando zeros", { context: "Home" })
+            }
+          } catch {
+            // Ignorar erros de parse
           }
-        } else {
-          // Valores padrão se não houver cache
-          setStats({
-            completed: 0,
-            todayEarnings: 0,
-            balance: 0,
-          })
-          logger.warn("Nenhuma estatística em cache - usando valores padrão", {
-            context: "Home"
-          })
         }
       }
-    } catch (error: any) {
-      logger.error("Erro ao ler estatísticas do AsyncStorage", error, {
-        context: "Home"
-      })
-      setStatsError("Erro ao carregar dados locais")
     } finally {
       setIsLoadingStats(false)
     }
-  }, [user?.id, CACHE_KEY_STATS])
+  }, [user?.id, token, CACHE_KEY_STATS])
 
   const init = useCallback(async () => {
-    // APENAS AsyncStorage - SEM CHAMADAS À API
     setIsLoading(true)
 
     try {
-      // Remove loadUserData call
-
-      // Carregar estatísticas do AsyncStorage
+      // Verificar se o cache expirou (passou 24h - dia mudou)
       if (CACHE_KEY_STATS) {
         const cachedStats = await AsyncStorage.getItem(CACHE_KEY_STATS)
         if (cachedStats) {
-          const parsedStats = JSON.parse(cachedStats)
-          const cachedDate = parsedStats.date
-          const today = new Date().toDateString()
+          try {
+            const parsedStats = JSON.parse(cachedStats)
+            const cachedDate = parsedStats.date
+            const today = new Date().toDateString()
 
-          // Verificar se o cache expirou (24h - data diferente)
-          if (cachedDate !== today) {
-            logger.info("Cache de stats expirado (24h) - limpando", {
-              context: "Home",
-              data: { cachedDate, today }
+            // Se mudou o dia, limpar o cache (reset de 24h)
+            if (cachedDate !== today) {
+              logger.info("Cache expirado (24h) - limpando e buscando novos dados", {
+                context: "Home",
+                data: { cachedDate, today }
+              })
+              await AsyncStorage.removeItem(CACHE_KEY_STATS)
+              // Buscar dados atualizados da API
+              await loadStats()
+            } else {
+              // Cache válido - carregar do cache primeiro (mais rápido)
+              setStats(parsedStats)
+              logger.info("Stats carregadas do cache (válido)", { context: "Home" })
+
+              // Buscar da API em background para atualizar
+              loadStats()
+            }
+          } catch (parseError) {
+            logger.error("Erro ao parsear cache - buscando da API", parseError, {
+              context: "Home"
             })
-            // Limpar cache expirado
             await AsyncStorage.removeItem(CACHE_KEY_STATS)
-            // Resetar stats para valores padrão
-            setStats({
-              completed: 0,
-              todayEarnings: 0,
-              balance: 0,
-            })
-          } else {
-            // Cache válido - usar dados em cache
-            setStats(parsedStats)
-            logger.info("Stats carregadas do cache (válido)", { context: "Home" })
+            await loadStats()
           }
         } else {
-          // Sem cache - valores padrão
-          setStats({
-            completed: 0,
-            todayEarnings: 0,
-            balance: 0,
-          })
-          logger.info("Nenhum cache de stats - usando valores padrão", { context: "Home" })
+          // Sem cache - buscar da API
+          logger.info("Sem cache - buscando da API", { context: "Home" })
+          await loadStats()
         }
       }
     } catch (e) {
-      logger.warn("Erro ao ler cache", { context: "Home" })
+      logger.warn("Erro ao inicializar", { context: "Home" })
     } finally {
       setIsLoading(false)
     }
-  }, [CACHE_KEY_STATS]) // Remove loadUserData dependency
+  }, [CACHE_KEY_STATS, loadStats])
 
   useFocusEffect(
     useCallback(() => {
@@ -160,14 +212,12 @@ export default function Home() {
   )
 
   const handleRefresh = async () => {
-    // Apenas recarrega estatísticas (SEM API e SEM USER DATA - user vem do context)
     setRefreshing(true)
     try {
-      // await loadUserData() // Removed
       await loadStats()
-      logger.info("Dados recarregados do AsyncStorage", { context: "Home" })
+      logger.info("Dados recarregados da API", { context: "Home" })
     } catch (error: any) {
-      logger.error("Erro ao recarregar do AsyncStorage", error, { context: "Home" })
+      logger.error("Erro ao recarregar da API", error, { context: "Home" })
     } finally {
       setRefreshing(false)
     }
@@ -175,14 +225,12 @@ export default function Home() {
 
   const handleClearCache = async () => {
     try {
-      // Remove CACHE_KEY_USER
       if (CACHE_KEY_STATS) {
-        // await AsyncStorage.removeItem(CACHE_KEY_USER) // Removed
         await AsyncStorage.removeItem(CACHE_KEY_STATS)
       }
-      Alert.alert("Cache Limpo", "Os dados locais foram removidos. Recarregando...")
-      // setDeliveryManData(null) // Removed
-      init()
+      Alert.alert("Cache Limpo", "Os dados locais foram removidos. Recarregando da API...")
+      // Buscar dados atualizados da API
+      await loadStats()
     } catch (error) {
       Alert.alert("Erro", "Falha ao limpar cache")
     }
@@ -226,6 +274,7 @@ export default function Home() {
             deliveryMan={DeliveryMan}
             balance={stats.todayEarnings}
             loadingBalance={isLoadingStats}
+            avatarUrl={user.Avatar?.path}
           />
         )}
 
@@ -274,7 +323,7 @@ export default function Home() {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Estatísticas</Text>
           <Text style={styles.sectionSubtitle}>
-            {isLoadingStats ? "Carregando..." : "Seus números de hoje (AsyncStorage)"}
+            {isLoadingStats ? "Carregando..." : "Seus números de hoje (zera a cada 24h)"}
           </Text>
         </View>
 

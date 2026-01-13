@@ -28,6 +28,10 @@ interface UserWrapperProps {
    * Se true, exibe um loading no lugar do saldo
    */
   loadingBalance?: boolean;
+  /**
+   * URL do avatar do usuário (do backend)
+   */
+  avatarUrl?: string | null;
 }
 
 export default function UserWrapper({
@@ -35,6 +39,7 @@ export default function UserWrapper({
   avatarSource,
   balance,
   loadingBalance = false,
+  avatarUrl,
 }: UserWrapperProps) {
   // Formata o saldo para exibição
   const formattedBalance = React.useMemo(() => {
@@ -60,7 +65,11 @@ export default function UserWrapper({
     <View style={styles.container}>
       <View style={styles.avatarContainer}>
         <Image
-          source={avatarSource || require('@/app/assets/logo_marca.png')}
+          source={
+            avatarUrl
+              ? { uri: avatarUrl }
+              : avatarSource || require('@/app/assets/logo_marca.png')
+          }
           style={styles.avatar}
           resizeMode="cover"
         />

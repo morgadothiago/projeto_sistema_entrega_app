@@ -31,6 +31,13 @@ interface Balance {
   amount: string
 }
 
+interface Avatar {
+  id: number
+  path: string
+  filename: string
+  publicId: string
+}
+
 enum UserStatus {
   ACTIVE = "ACTIVE",
   INACTIVE = "INACTIVE",
@@ -49,6 +56,7 @@ interface ApiResponse {
   DeliveryMan: DeliveryMan | null // pode ser null dependendo do role
   Extract: any[] // se você tiver tipagem dos extratos, substitua "any"
   Status: Status[]
+  Avatar?: Avatar | null // Avatar do usuário
 }
 interface Status {
   id: number

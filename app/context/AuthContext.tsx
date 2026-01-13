@@ -17,6 +17,7 @@ type AuthContextData = {
   loading: boolean
   signIn: (email: string, password: string) => Promise<ApiResponse>
   signOut: () => Promise<void>
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData)
@@ -93,6 +94,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  // 🔹 Recarregar dados do usuário
+  const refreshUser = useCallback(async () => {
+    try {
+      if (!token || !user?.id) return
+
+      console.log('🔄 Recarregando dados do usuário...')
+
+      const response = await api.get(`/users/${user.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const updatedUser = response.data
+      setUser(updatedUser)
+      await saveItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser))
+
+      console.log('✅ Dados do usuário atualizados')
+    } catch (error) {
+      console.error('❌ Erro ao recarregar dados do usuário:', error)
+    }
+  }, [token, user?.id])
+
   // 🔹 Logout
   const signOut = useCallback(async () => {
     try {
@@ -110,8 +134,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading,
       signIn,
       signOut,
+      refreshUser,
     }),
-    [user, token, loading, signIn, signOut]
+    [user, token, loading, signIn, signOut, refreshUser]
   )
 
   return (

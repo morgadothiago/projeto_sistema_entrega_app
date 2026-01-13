@@ -179,15 +179,8 @@ export default function Charts() {
 
       let orders: ApiOrder[] = response.data.data || [] // Garantir que é array
 
-      // Tentar filtrar pelo ID do entregador se a API retornar esse campo
-      // Isso atende à solicitação: "entregas tem que ser relacionada a o deliveryman"
-      // Se não tiver o campo, mostramos todas (assumindo que o endpoint já filtra ou retorna pool aberto)
-      const hasDeliverymanInfo = orders.some((o: any) => o.deliverymanId)
-
-      if (hasDeliverymanInfo) {
-        orders = orders.filter((o: any) => o.deliverymanId === user.id || o.deliverymanId === Number(user.id))
-      }
-
+      // O backend já filtra as entregas corretamente por entregador
+      // Não é necessário filtro adicional aqui
       const mappedItems = orders.map(mapOrderToDeliveryItem)
 
       // Ordenar por data (mais recente primeiro)

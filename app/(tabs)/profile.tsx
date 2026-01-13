@@ -6,6 +6,7 @@ import * as ImagePicker from "expo-image-picker"
 import { useRouter } from "expo-router"
 import React, { useEffect, useState } from "react"
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   ImageBackground,
@@ -17,14 +18,18 @@ import {
   View,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
+import Toast from "react-native-toast-message"
 import { Header } from "../components/Header"
 import { useAuth } from "../context/AuthContext"
+import { api } from "../service/api"
 import { colors } from "../theme"
+import { logger } from "../utils/logger"
 
 export default function Profile() {
-  const { user, signOut } = useAuth()
+  const { user, signOut, token, refreshUser } = useAuth()
   const router = useRouter()
   const [profileImage, setProfileImage] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
   const fadeAnim = React.useRef(new Animated.Value(0)).current
   const slideAnim = React.useRef(new Animated.Value(50)).current
 
@@ -42,7 +47,12 @@ export default function Profile() {
         useNativeDriver: true,
       }),
     ]).start()
-  }, [])
+
+    // Carregar avatar do backend se existir
+    if (user?.Avatar?.path) {
+      setProfileImage(user.Avatar.path)
+    }
+  }, [user])
 
   // 🔹 Pedir permissão de câmera e galeria
   useEffect(() => {
@@ -57,6 +67,79 @@ export default function Profile() {
     })()
   }, [])
 
+  const uploadAvatar = async (imageUri: string) => {
+    if (!user?.id || !token) {
+      Alert.alert("Erro", "Usuário não autenticado")
+      return
+    }
+
+    setIsUploading(true)
+    try {
+      logger.info("Iniciando upload de avatar", { context: "Profile" })
+
+      // Criar FormData
+      const formData = new FormData()
+
+      // Extrair o nome do arquivo da URI
+      const filename = imageUri.split("/").pop() || "avatar.jpg"
+
+      // Extrair tipo do arquivo
+      const match = /\.(\w+)$/.exec(filename)
+      const type = match ? `image/${match[1]}` : "image/jpeg"
+
+      // Adicionar arquivo ao FormData
+      formData.append("file", {
+        uri: imageUri,
+        name: filename,
+        type,
+      } as any)
+
+      logger.info("Enviando arquivo para o backend", {
+        context: "Profile",
+        data: { filename, type },
+      })
+
+      // Fazer upload
+      const response = await api.patch(`/users/${user.id}/avatar`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      })
+
+      logger.info("Avatar atualizado com sucesso", {
+        context: "Profile",
+        data: response.data,
+      })
+
+      // Atualizar imagem localmente
+      setProfileImage(response.data.path)
+
+      // Recarregar dados do usuário para atualizar o contexto
+      await refreshUser()
+
+      Toast.show({
+        type: "success",
+        text1: "Avatar atualizado!",
+        text2: "Sua foto de perfil foi atualizada com sucesso",
+        visibilityTime: 3000,
+      })
+    } catch (error: any) {
+      logger.error("Erro ao fazer upload do avatar", error, {
+        context: "Profile",
+      })
+
+      Toast.show({
+        type: "error",
+        text1: "Erro ao atualizar avatar",
+        text2: error?.response?.data?.message || "Tente novamente mais tarde",
+        visibilityTime: 4000,
+      })
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
   const pickFromGallery = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -65,7 +148,10 @@ export default function Profile() {
       aspect: [1, 1],
     })
     if (!result.canceled) {
-      setProfileImage(result.assets[0].uri)
+      const imageUri = result.assets[0].uri
+      setProfileImage(imageUri)
+      // Fazer upload imediatamente
+      await uploadAvatar(imageUri)
     }
   }
 
@@ -77,7 +163,10 @@ export default function Profile() {
       aspect: [1, 1],
     })
     if (!result.canceled) {
-      setProfileImage(result.assets[0].uri)
+      const imageUri = result.assets[0].uri
+      setProfileImage(imageUri)
+      // Fazer upload imediatamente
+      await uploadAvatar(imageUri)
     }
   }
 
@@ -158,14 +247,21 @@ export default function Profile() {
               <TouchableOpacity
                 onPress={chooseImageOption}
                 style={styles.avatarContainer}
+                disabled={isUploading}
               >
                 <Image
                   source={profileImage ? { uri: profileImage } : logo}
                   style={styles.avatar}
                 />
-                <View style={styles.editIconBadge}>
-                  <Feather name="camera" size={14} color="#FFF" />
-                </View>
+                {isUploading ? (
+                  <View style={styles.uploadingBadge}>
+                    <ActivityIndicator size="small" color="#FFF" />
+                  </View>
+                ) : (
+                  <View style={styles.editIconBadge}>
+                    <Feather name="camera" size={14} color="#FFF" />
+                  </View>
+                )}
               </TouchableOpacity>
               <View style={styles.profileInfo}>
                 <Text style={styles.userName}>
@@ -273,6 +369,19 @@ const styles = StyleSheet.create({
     borderColor: colors.buttons,
   },
   editIconBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    backgroundColor: colors.buttons,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#1A1A1A",
+  },
+  uploadingBadge: {
     position: "absolute",
     bottom: 0,
     right: 0,
