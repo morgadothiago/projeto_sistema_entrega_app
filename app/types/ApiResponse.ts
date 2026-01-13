@@ -31,11 +31,19 @@ interface Balance {
   amount: string
 }
 
+enum UserStatus {
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+  NO_DOCUMENTS = "NO_DOCUMENTS",
+  BLOCKED = "BLOCKED",
+}
+
 interface ApiResponse {
   id: number
   name?: string
   email: string
   role: string
+  status: UserStatus
   Balance: Balance
   Company: null | any // se você tiver tipagem da Company, substitua "any"
   DeliveryMan: DeliveryMan | null // pode ser null dependendo do role
@@ -58,4 +66,5 @@ enum PaymentOption {
   CreditCard = "CreditCard",
 }
 
+export { UserStatus }
 export type { ApiResponse }

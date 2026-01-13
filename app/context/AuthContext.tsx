@@ -15,7 +15,7 @@ type AuthContextData = {
   user: ApiResponse | null
   token: string | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<void>
+  signIn: (email: string, password: string) => Promise<ApiResponse>
   signOut: () => Promise<void>
 }
 
@@ -60,12 +60,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   // 🔹 Login
-  const signIn = useCallback(async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string): Promise<ApiResponse> => {
     try {
       const { token: responseToken, user: userData } = await login({
         email,
         password,
       })
+
+      console.log('📡 Resposta da API de Login:')
+      console.log('🔑 Token:', responseToken ? 'Recebido' : 'Não recebido')
+      console.log('👤 Dados do usuário:', userData)
+      console.log('📊 Status do usuário:', userData?.status)
 
       // Atualiza estado
       setUser(userData)
@@ -77,7 +82,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Persiste no AsyncStorage (chaves padronizadas)
       await saveItem(STORAGE_KEYS.TOKEN, responseToken)
       await saveItem(STORAGE_KEYS.USER, JSON.stringify(userData))
+
+      console.log('💾 Dados salvos no AsyncStorage')
+
+      // Retorna o usuário para permitir verificação imediata do status
+      return userData
     } catch (error: any) {
+      console.error('❌ Erro no signIn:', error)
       throw error
     }
   }, [])

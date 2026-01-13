@@ -20,6 +20,7 @@ import { yupResolver } from "@hookform/resolvers/yup"
 import { useForm } from "react-hook-form"
 
 import { useAuth } from "@/app/context/AuthContext"
+import { UserStatus } from "@/app/types/ApiResponse"
 import Toast from "react-native-toast-message"
 import fundoLogo from "../../assets/funndo.png"
 import Logo from "../../assets/logo.png"
@@ -38,7 +39,7 @@ interface LoginData {
 }
 
 export default function LoginScreen() {
-  const { signIn } = useAuth()
+  const { signIn, signOut, user } = useAuth()
   const {
     control,
     handleSubmit,
@@ -89,16 +90,55 @@ export default function LoginScreen() {
   const onSubmit = handleSubmit(async (data: LoginData) => {
     setLoading(true)
     try {
-      await signIn(data.email, data.password)
-      Toast.show({
-        type: "success",
-        text1: "Sucesso!",
-        text2: "Você fez login corretamente",
-      })
+      const loggedUser = await signIn(data.email, data.password)
+
+      console.log('🔐 Login bem-sucedido!')
+      console.log('👤 Usuário:', loggedUser)
+      console.log('📊 Status:', loggedUser.status)
 
       setLoading(false)
-      router.push("/(tabs)/home")
+
+      // Verifica o status do usuário e redireciona ou mostra mensagem
+      if (loggedUser.status === UserStatus.NO_DOCUMENTS) {
+        console.log('➡️ Redirecionando para LoadingDocuments')
+        Toast.show({
+          type: "info",
+          text1: "Complete seu cadastro",
+          text2: "Envie seus documentos para continuar",
+        })
+        // Usuário precisa completar o cadastro (documentos e pagamento)
+        router.replace("/(auth)/LoadingDocuments")
+      } else if (loggedUser.status === UserStatus.ACTIVE) {
+        console.log('➡️ Redirecionando para Home. Status: ACTIVE')
+        Toast.show({
+          type: "success",
+          text1: "Bem-vindo!",
+          text2: "Login realizado com sucesso",
+        })
+        // Usuário ativo pode acessar home
+        router.replace("/(tabs)/home")
+      } else if (loggedUser.status === UserStatus.INACTIVE) {
+        console.log('⏳ Status: INACTIVE - aguardando aprovação')
+        Toast.show({
+          type: "info",
+          text1: "Cadastro em análise",
+          text2: "Seus documentos estão sendo analisados. Aguarde a aprovação.",
+          visibilityTime: 5000,
+        })
+        // Não redireciona, mantém no login
+      } else if (loggedUser.status === UserStatus.BLOCKED) {
+        console.log('🚫 Status: BLOCKED')
+        Toast.show({
+          type: "error",
+          text1: "Conta bloqueada",
+          text2: "Sua conta foi bloqueada. Entre em contato com o suporte.",
+          visibilityTime: 5000,
+        })
+        // Faz logout do usuário bloqueado
+        await signOut()
+      }
     } catch (error: any) {
+      console.error('❌ Erro no login:', error)
       Toast.show({
         type: "error",
         text1: "Erro no login",

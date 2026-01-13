@@ -17,7 +17,7 @@ interface LoginResponse {
   user: ApiResponse
 }
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL
+const BASE_URL = process.env.API_BASE_URL || "http://localhost:3000/"
 
 const api = Axios.create({
   baseURL: BASE_URL,
@@ -157,7 +157,7 @@ export async function newAccount(data: any) {
 
     throw new Error(
       error.response?.data?.message ||
-      "Erro ao criar nova conta. Verifique os dados enviados."
+        "Erro ao criar nova conta. Verifique os dados enviados."
     )
   }
 }
@@ -219,15 +219,15 @@ export async function resetPassword(data: {
 
 // Configuração de cache por endpoint (em minutos)
 const CACHE_CONFIG: Record<string, number> = {
-  '/deliveryman': 3, // 3 minutos para dados financeiros
-  '/delivery': 2, // 2 minutos para lista de entregas
-  '/balance': 3, // 3 minutos para saldo
+  "/deliveryman": 3, // 3 minutos para dados financeiros
+  "/delivery": 2, // 2 minutos para lista de entregas
+  "/balance": 3, // 3 minutos para saldo
 }
 
 // Função para determinar se deve usar cache
 function shouldUseCache(config: InternalAxiosRequestConfig): boolean {
   // Apenas GET requests são cacheadas
-  if (config.method?.toLowerCase() !== 'get') return false
+  if (config.method?.toLowerCase() !== "get") return false
 
   // Ignora se explicitamente desabilitado
   if ((config as any).skipCache === true) return false
@@ -236,7 +236,7 @@ function shouldUseCache(config: InternalAxiosRequestConfig): boolean {
 }
 
 // Função para obter TTL do cache baseado na URL
-function getCacheTTL(url: string = ''): number {
+function getCacheTTL(url: string = ""): number {
   for (const [path, ttl] of Object.entries(CACHE_CONFIG)) {
     if (url.includes(path)) {
       return ttl * 60 * 1000 // Converte minutos para ms
@@ -254,7 +254,7 @@ api.interceptors.request.use(
 
     // ===== CACHE E DEDUPLICAÇÃO DE REQUESTS =====
     if (shouldUseCache(config)) {
-      const url = config.url || ''
+      const url = config.url || ""
 
       // 1. Verifica se há dados em cache
       const cachedData = requestCache.get(url, config)
@@ -265,7 +265,7 @@ api.interceptors.request.use(
           response: {
             data: cachedData,
             status: 200,
-            statusText: 'OK (from cache)',
+            statusText: "OK (from cache)",
             headers: {},
             config,
           },
@@ -283,7 +283,7 @@ api.interceptors.request.use(
             response: {
               data,
               status: 200,
-              statusText: 'OK (from pending)',
+              statusText: "OK (from pending)",
               headers: {},
               config,
             },
@@ -305,7 +305,7 @@ api.interceptors.response.use(
     // ===== ARMAZENA RESPOSTA NO CACHE =====
     const config = response.config as InternalAxiosRequestConfig
     if (shouldUseCache(config)) {
-      const url = config.url || ''
+      const url = config.url || ""
       const ttl = getCacheTTL(url)
       requestCache.set(url, response.data, config, ttl)
     }

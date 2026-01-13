@@ -7,8 +7,13 @@ import CheckIcon from "@/app/assets/check.json"
 import ImageFundo from "@/app/assets/funndo.png"
 
 export default function LoadingDocuments() {
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
   const router = useRouter()
+
+  const handleLogout = async () => {
+    await signOut()
+    router.replace("/(auth)/Signin")
+  }
 
   return (
     <Loading
@@ -27,7 +32,7 @@ export default function LoadingDocuments() {
         },
         {
           text: "Voltar para o login",
-          onPress: () => router.replace("/(auth)/Signin"),
+          onPress: handleLogout,
           variant: "secondary",
         },
       ]}

@@ -13,6 +13,7 @@ import * as NavigationBar from 'expo-navigation-bar'
 import { Platform } from "react-native"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { NotificationProvider } from "./context/NotificationContext"
+import { UserStatus } from "./types/ApiResponse"
 
 function InitialLayout() {
   const { user, loading } = useAuth()
@@ -30,13 +31,60 @@ function InitialLayout() {
     if (loading) return
 
     const inAuthGroup = segments[0] === '(auth)'
+    const inTabsGroup = segments[0] === '(tabs)'
+    const currentRoute = segments[segments.length - 1]
+
+    // Telas permitidas para usuários com NO_DOCUMENTS
+    const onboardingScreens = ['LoadingDocuments', 'Documents', 'LoadingDocumentSuccess', 'Payments', 'LoadingPaymentSuccess']
+    const isOnboardingScreen = onboardingScreens.includes(currentRoute as string)
+
+    console.log('🧭 _layout.tsx - Verificação de Navegação:')
+    console.log('👤 Usuário:', user ? 'Autenticado' : 'Não autenticado')
+    console.log('📊 Status:', user?.status)
+    console.log('📍 Rota atual:', currentRoute)
+    console.log('🔐 Em grupo auth?', inAuthGroup)
+    console.log('📱 Em grupo tabs?', inTabsGroup)
+    console.log('📝 É tela de onboarding?', isOnboardingScreen)
 
     if (!user && !inAuthGroup) {
-      // Redireciona para login se não estiver autenticado
+      console.log('➡️ Redirecionando para Login (não autenticado)')
+      // Não autenticado → vai para login
       router.replace('/Signin')
-    } else if (user && inAuthGroup) {
-      // Redireciona para home se já estiver autenticado
-      router.replace('/(tabs)/home')
+    } else if (user && user.status === UserStatus.NO_DOCUMENTS) {
+      console.log('🎯 Usuário com NO_DOCUMENTS')
+      // Usuário precisa completar cadastro
+      if (!inAuthGroup || (inAuthGroup && currentRoute === 'Signin')) {
+        console.log('➡️ Redirecionando para LoadingDocuments')
+        // Se não está em auth ou está no login, redireciona para onboarding
+        router.replace('/(auth)/LoadingDocuments')
+      } else {
+        console.log('✅ Já está em tela de onboarding, não redireciona')
+      }
+    } else if (user && user.status === UserStatus.ACTIVE) {
+      console.log('✅ Usuário ACTIVE')
+      // Usuário com status ACTIVE pode acessar home
+      if (inAuthGroup && currentRoute === 'Signin') {
+        console.log('➡️ Redirecionando para Home (usuário ACTIVE no login)')
+        router.replace('/(tabs)/home')
+      }
+      // Se já está em tabs, não faz nada
+    } else if (user && (user.status === UserStatus.INACTIVE || user.status === UserStatus.BLOCKED)) {
+      console.log('🚫 Usuário INATIVO ou BLOQUEADO')
+      // Usuário inativo ou bloqueado não pode acessar home
+      if (inTabsGroup) {
+        console.log('➡️ Redirecionando para Login (usuário sem permissão)')
+        router.replace('/(auth)/Signin')
+      }
+    } else if (user && !inAuthGroup && !inTabsGroup) {
+      console.log('➡️ Rota desconhecida, redirecionando baseado no status')
+      // Usuário em rota desconhecida
+      if (user.status === UserStatus.ACTIVE) {
+        router.replace('/(tabs)/home')
+      } else {
+        router.replace('/(auth)/Signin')
+      }
+    } else {
+      console.log('✅ Sem redirecionamento necessário')
     }
   }, [user, segments, loading])
 

@@ -270,8 +270,6 @@ export default function Payments() {
 
       // Mostra tela de sucesso
       setShowSuccess(true)
-
-      router.push("/(auth)/Signin")
     } catch (error: any) {
       setIsSubmitting(false)
 

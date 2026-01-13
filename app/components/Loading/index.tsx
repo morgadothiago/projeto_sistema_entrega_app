@@ -152,14 +152,14 @@ export default function Loading({
     </>
   )
 
-  // Se tem background, renderiza com ImageBackground
+  // Se tem background, renderiza com ImageBackground ocupando toda a tela
   if (background) {
     return (
-      <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
-        <ImageBackground source={background} style={[styles.container, containerStyle]}>
+      <ImageBackground source={background} style={[styles.container, containerStyle, { flex: 1 }]}>
+        <SafeAreaView style={{ flex: 1 }} edges={[]}>
           {content}
-        </ImageBackground>
-      </SafeAreaView>
+        </SafeAreaView>
+      </ImageBackground>
     )
   }
 
